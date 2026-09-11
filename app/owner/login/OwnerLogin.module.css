@@ -1,0 +1,29 @@
+.drift {
+  inset: calc(-1 * max(32px, 2vmax));
+  transform: translate3d(0, 0, 0) scale(1.025);
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .drift {
+    will-change: transform;
+  }
+}
+
+.loginCard {
+  border: 1px solid rgb(255 255 255 / 0.24);
+  border-radius: 20px;
+  padding: 24px;
+  background: rgb(17 24 39 / 0.78);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+}
+
+/* Restrict the modest, static blur radius to the form, never the full viewport.
+   Browsers without backdrop-filter retain the legible dark fallback above. */
+@supports ((backdrop-filter: blur(8px)) or (-webkit-backdrop-filter: blur(8px))) {
+  .loginCard {
+    background: rgb(255 255 255 / 0.12);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+  }
+}

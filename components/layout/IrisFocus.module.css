@@ -1,0 +1,56 @@
+@property --iris-radius {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 0px;
+}
+
+.interface {
+  --iris-radius: 0px;
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  -webkit-mask-image: radial-gradient(circle at var(--iris-x) var(--iris-y), transparent 0 var(--iris-radius), #000 calc(var(--iris-radius) + 2px));
+  mask-image: radial-gradient(circle at var(--iris-x) var(--iris-y), transparent 0 var(--iris-radius), #000 calc(var(--iris-radius) + 2px));
+  transition: --iris-radius var(--iris-duration, 720ms) cubic-bezier(0.65, 0, 0.2, 1);
+}
+
+.interface[data-focus="true"] {
+  --iris-radius: 150vmax;
+}
+
+.interface[data-covered="true"] {
+  display: none;
+  opacity: 0;
+  pointer-events: none;
+  user-select: none;
+}
+
+.focusAvatar {
+  position: fixed;
+  z-index: 80;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 0.65);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.12);
+  box-shadow: 0 10px 36px rgb(17 24 39 / 0.2);
+  cursor: pointer;
+  transition: transform 320ms ease, box-shadow 320ms ease;
+}
+
+.focusAvatar:hover,
+.focusAvatar:focus-visible {
+  transform: scale(1.06);
+  box-shadow: 0 14px 44px rgb(17 24 39 / 0.28);
+}
+
+.focusAvatar:focus-visible {
+  outline: 2px solid rgb(255 255 255 / 0.9);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interface,
+  .focusAvatar {
+    transition-duration: 0.01ms;
+  }
+}

@@ -1,0 +1,486 @@
+.dragGallery {
+  width: 100%;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse 72% 58% at 78% 16%, rgb(203 213 225 / 0.2), transparent 68%),
+    radial-gradient(ellipse 54% 48% at 18% 72%, rgb(241 125 120 / 0.055), transparent 72%),
+    linear-gradient(112deg, #ffffff 0%, #f8fafb 46%, #ffffff 82%);
+}
+
+.dragPhoto {
+  position: relative;
+  overflow: hidden;
+  width: 144px;
+  height: 216px;
+  border: 1px solid rgb(17 24 39 / 0.08);
+  border-radius: 8px;
+  background: rgb(243 244 246);
+  box-shadow: 0 12px 30px rgb(17 24 39 / 0.08);
+}
+
+.photoButton {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  color: inherit;
+  background: transparent;
+  cursor: zoom-in;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.photoButton:focus-visible {
+  outline: 2px solid rgb(225 111 97);
+  outline-offset: -3px;
+}
+
+.image {
+  pointer-events: none;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: transform 700ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.imageFallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  color: rgb(107 114 128);
+  background: rgb(243 244 246);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dragPhoto:hover .image { transform: scale(1.035); }
+
+.caption {
+  position: absolute;
+  pointer-events: none;
+  inset: auto 0 0;
+  padding: 52px 12px 11px;
+  color: #fff;
+  background: linear-gradient(to top, rgb(0 0 0 / 0.72), transparent);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.dragPhoto:hover .caption { opacity: 1; }
+
+.captionTitle {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.captionBody {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 3px 0 0;
+  color: rgb(255 255 255 / 0.76);
+  font-size: 10px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.accordionSection {
+  position: relative;
+  z-index: 2;
+  border-top: 1px solid rgb(17 24 39 / 0.08);
+  padding: 28px 0 80px;
+  background: #fff;
+}
+
+.accordion {
+  display: flex;
+  width: 100%;
+  height: 460px;
+  gap: 10px;
+  perspective: 1400px;
+}
+
+.accordionPanel {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 0;
+  padding: 0;
+  border: 1px solid rgb(17 24 39 / 0.08);
+  border-radius: 10px;
+  color: rgb(17 24 39);
+  background: #fff;
+  box-shadow: 0 12px 28px -20px rgb(17 24 39 / 0.38);
+  cursor: pointer;
+  transform: rotateY(-5deg);
+  transform-origin: center;
+  transform-style: preserve-3d;
+  transition: flex-grow 600ms cubic-bezier(0.22, 1, 0.36, 1), transform 600ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 300ms ease;
+  will-change: flex-grow, transform;
+}
+
+.accordionPanel[data-side="before"] { transform: rotateY(5deg); }
+
+.accordionPanel[data-active="true"] {
+  flex-grow: 8.7;
+  z-index: 1;
+  transform: rotateY(0);
+  box-shadow: 0 18px 42px -22px rgb(17 24 39 / 0.42);
+}
+
+.accordionPanel:focus-visible {
+  outline: 2px solid rgb(225 111 97);
+  outline-offset: 3px;
+}
+
+.accordionMedia {
+  position: absolute;
+  inset: 0;
+  filter: grayscale(1);
+  transition: filter 600ms ease;
+}
+
+.accordionPanel[data-active="true"] .accordionMedia {
+  filter: grayscale(0);
+}
+
+.accordionWash {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(255 255 255 / 0.94), transparent 48%), rgb(255 255 255 / 0.18);
+  opacity: 0.72;
+  transition: opacity 400ms ease;
+}
+
+.accordionPanel[data-active="true"] .accordionWash { opacity: 1; }
+
+.accordionLabel {
+  position: absolute;
+  z-index: 2;
+  right: 20px;
+  bottom: 20px;
+  left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  overflow: hidden;
+  font-family: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  font-size: clamp(17px, 1.8vw, 24px);
+  opacity: 0;
+  transform: translateX(-14px);
+  transition: opacity 360ms ease 100ms, transform 520ms cubic-bezier(0.22, 1, 0.36, 1) 80ms;
+}
+
+.accordionPanel[data-active="true"] .accordionLabel {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.accordionLabel > span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accordionBar {
+  width: 3px;
+  height: 27px;
+  flex: none;
+  border-radius: 3px;
+  background: rgb(225 111 97);
+  box-shadow: 0 0 12px rgb(225 111 97 / 0.32);
+}
+
+.accordionIndicators {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.accordionIndicator {
+  position: relative;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.accordionIndicator::after {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(17 24 39 / 0.15);
+  content: "";
+  transition: background-color 220ms ease, transform 220ms ease, opacity 220ms ease;
+}
+
+.accordionIndicator[data-active="true"]::after {
+  background: rgb(225 111 97);
+  transform: scale(1.18);
+}
+
+.accordionIndicator:hover::after { opacity: 0.72; }
+.accordionIndicator:focus-visible { outline: 1px solid rgb(225 111 97); outline-offset: -7px; }
+
+.lightbox {
+  position: fixed;
+  z-index: 120;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  padding: 12px;
+  background: #fff;
+  animation: lightbox-enter 220ms ease-out both;
+  touch-action: pan-y;
+}
+
+.lightboxStack {
+  position: relative;
+  width: min(96vw, 1180px);
+  height: min(92svh, 860px);
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 78px;
+  gap: 10px;
+}
+
+.lightboxContent {
+  position: relative;
+  width: 100%;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid rgb(17 24 39 / 0.08);
+  border-radius: 12px;
+  background: rgb(245 245 245);
+}
+
+.lightboxImageFrame {
+  position: absolute;
+  inset: 0;
+  animation: lightbox-slide-right 260ms cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+.lightboxImageFrame[data-direction="left"] {
+  animation-name: lightbox-slide-left;
+}
+
+.lightboxImage {
+  object-fit: contain;
+}
+
+.lightboxFallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgb(75 85 99);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.lightboxThumbnails {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  height: 78px;
+  gap: 5px;
+}
+
+.lightboxThumbnail {
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 0;
+  padding: 0;
+  border: 1px solid rgb(17 24 39 / 0.12);
+  border-radius: 6px;
+  background: #fff;
+  cursor: pointer;
+  filter: grayscale(0.82);
+  opacity: 0.62;
+  transition: flex-grow 420ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease, opacity 260ms ease, border-color 260ms ease;
+}
+
+.lightboxThumbnail[data-active="true"] {
+  flex-grow: 3.2;
+  border-color: rgb(225 111 97 / 0.72);
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+.lightboxThumbnail:hover { opacity: 0.9; }
+.lightboxThumbnail:focus-visible { outline: 2px solid rgb(225 111 97); outline-offset: 2px; }
+
+.lightboxControl,
+.lightboxPagination {
+  position: fixed;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgb(17 24 39 / 0.12);
+  color: rgb(31 41 55);
+  background: rgb(255 255 255 / 0.88);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.lightboxControl {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+
+.lightboxControl:hover { transform: scale(1.06); background: #fff; }
+.lightboxControl:focus-visible { outline: 2px solid rgb(225 111 97); outline-offset: 3px; }
+.previousButton { left: max(22px, calc((100vw - 1180px) / 2 + 20px)); top: 50%; transform: translateY(-50%); }
+.previousButton:hover { transform: translateY(-50%) scale(1.06); }
+.nextButton { right: max(22px, calc((100vw - 1180px) / 2 + 20px)); top: 50%; transform: translateY(-50%); }
+.nextButton:hover { transform: translateY(-50%) scale(1.06); }
+.closeButton { top: 22px; right: 22px; }
+
+.lightboxPagination {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  min-width: 74px;
+  min-height: 36px;
+  margin: 0;
+  padding: 0 13px;
+  border-radius: 18px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 11px;
+  transform: translateX(-50%);
+}
+
+.placeholder {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.placeholder span {
+  aspect-ratio: 4 / 3;
+  border-radius: 7px;
+  background: rgb(243 244 246);
+  animation: gallery-pulse 1.4s ease-in-out infinite alternate;
+}
+
+@keyframes gallery-pulse {
+  from { opacity: 0.55; }
+  to { opacity: 1; }
+}
+
+@keyframes lightbox-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lightbox-slide-right {
+  from { opacity: 0; transform: translate3d(24px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes lightbox-slide-left {
+  from { opacity: 0; transform: translate3d(-24px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@media (max-width: 639px) {
+  .dragGallery {
+    margin-inline: -20px;
+    width: calc(100% + 40px);
+    border-radius: 0;
+  }
+  .dragPhoto {
+    border-radius: 10px;
+  }
+  .caption { padding: 34px 7px 7px; }
+  .captionBody { display: none; }
+  .accordionSection {
+    margin-inline: -20px;
+    padding: 22px 5px 48px;
+  }
+  .accordion {
+    height: 300px;
+    min-height: 0;
+    flex-direction: row;
+    gap: 5px;
+    perspective: 1000px;
+  }
+  .accordionPanel {
+    width: auto;
+    min-height: 0;
+    flex: 1 1 0;
+    transform: rotateY(-3deg);
+    transition: flex-grow 520ms cubic-bezier(0.22, 1, 0.36, 1), transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .accordionPanel[data-side="before"] { transform: rotateY(3deg); }
+  .accordionPanel[data-active="true"] {
+    min-height: 0;
+    flex: 5 1 0;
+    transform: rotateY(0);
+  }
+  .accordionLabel { right: 14px; bottom: 14px; left: 14px; }
+  .accordionIndicators { margin-top: 6px; }
+  .accordionIndicator { width: 40px; height: 40px; }
+  .lightbox { padding: 8px; }
+  .lightboxStack {
+    width: calc(100vw - 16px);
+    height: min(88dvh, 760px);
+    max-height: calc(100dvh - 16px);
+    grid-template-rows: minmax(0, 1fr) 64px;
+    gap: 7px;
+  }
+  .lightboxContent { width: 100%; height: auto; border-radius: 10px; }
+  .lightboxThumbnails { height: 64px; gap: 4px; }
+  .lightboxThumbnail { border-radius: 5px; }
+  .lightboxThumbnail[data-active="true"] { flex-grow: 2.5; }
+  .lightboxControl { width: 38px; height: 38px; }
+  .previousButton { left: 18px; }
+  .nextButton { right: 18px; }
+  .closeButton { top: 18px; right: 18px; }
+  .lightboxPagination { bottom: 12px; }
+}
+
+@media (min-width: 768px) {
+  .dragPhoto {
+    width: 256px;
+    height: 384px;
+  }
+}
+
+@media (hover: none) {
+  .caption { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image, .caption, .placeholder span, .accordionPanel, .accordionMedia, .accordionWash, .accordionLabel, .lightbox, .lightboxImageFrame, .lightboxControl, .lightboxThumbnail {
+    transition: none;
+    animation: none;
+  }
+}

@@ -1,0 +1,297 @@
+.desktopSidebar,
+.drawer {
+  display: flex;
+  flex-direction: column;
+  background: rgb(255 255 255 / 0.9);
+  border-right: 1px solid rgb(17 24 39 / 0.1);
+  box-shadow: 12px 0 36px rgb(17 24 39 / 0.035);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+
+.desktopSidebar {
+  display: none;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  min-width: 208px;
+  max-width: 320px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .desktopSidebar {
+    display: flex;
+  }
+}
+
+.drawer {
+  position: relative;
+  width: min(82vw, 280px);
+  height: 100%;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 24px 24px 14px;
+}
+
+.profile {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 12px;
+}
+
+.profileImage {
+  position: relative;
+  display: block;
+  width: 48px;
+  height: 48px;
+  flex-shrink: 0;
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid rgb(17 24 39 / 0.1);
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.7);
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease;
+}
+
+.profileImage:hover,
+.profileImage:focus-visible {
+  border-color: rgb(226 109 101 / 0.65);
+  transform: scale(1.04);
+}
+
+.profileImage:focus-visible {
+  outline: 2px solid rgb(226 109 101 / 0.55);
+  outline-offset: 2px;
+}
+
+.profileImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.eyebrow {
+  display: block;
+  margin: 0;
+  color: rgb(190 70 70);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.title {
+  display: block;
+  margin-top: 7px;
+  color: rgb(17 24 39);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.navigation {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 18px 20px;
+  scrollbar-width: none;
+}
+
+.navigation::-webkit-scrollbar {
+  display: none;
+}
+
+.hoverHighlight {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: 8px;
+  left: 24px;
+  border-radius: 6px;
+  background: rgb(226 109 101 / 0.1);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1), height 260ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 160ms ease;
+}
+
+.hoverHighlight[data-visible="true"] {
+  opacity: 1;
+}
+
+.navItem {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  min-height: 40px;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px 7px 38px;
+  color: rgb(55 65 81 / 0.62);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 180ms ease, opacity 180ms ease, transform 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.number {
+  width: 20px;
+  flex-shrink: 0;
+  color: currentColor;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  opacity: 0.72;
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.navItem:hover,
+.navItem:focus-visible,
+.navItem[data-active="true"] {
+  color: rgb(31 41 55);
+}
+
+.navItem[data-active="true"] {
+  color: rgb(190 70 70);
+  transform: translateX(8px);
+}
+
+.navItem[data-hovered="true"] {
+  opacity: 1;
+  transform: translateX(6px);
+}
+
+.navItem[data-dimmed="true"] {
+  opacity: 0.42;
+}
+
+.navItem:focus-visible,
+.footerButton:focus-visible,
+.resizeHandle:focus-visible {
+  outline: 2px solid rgb(226 109 101 / 0.7);
+  outline-offset: 2px;
+}
+
+.marker {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 18px;
+  height: 1px;
+  background: rgb(55 65 81 / 0.42);
+  transform: translateY(-50%);
+  transition: width 260ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease;
+}
+
+.marker::before,
+.marker::after {
+  position: absolute;
+  left: 0;
+  width: 13px;
+  height: 1px;
+  background: rgb(55 65 81 / 0.22);
+  content: "";
+}
+
+.marker::before {
+  top: -9px;
+}
+
+.marker::after {
+  top: 9px;
+}
+
+.navItem:hover .marker,
+.navItem[data-hovered="true"] .marker {
+  width: 26px;
+}
+
+.navItem[data-active="true"] .marker {
+  width: 23px;
+  height: 2px;
+  background: rgb(226 109 101);
+}
+
+.group {
+  margin-top: 12px;
+}
+
+.groupLabel {
+  margin: 0;
+  padding: 12px 8px 8px 0;
+  color: rgb(55 65 81 / 0.48);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+}
+
+.groupInner {
+  padding-left: 8px;
+}
+
+.footer {
+  flex-shrink: 0;
+  border-top: 1px solid rgb(17 24 39 / 0.1);
+  padding: 10px 18px 18px;
+}
+
+.footerButton {
+  display: flex;
+  min-height: 40px;
+  width: 100%;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 8px;
+  color: rgb(55 65 81 / 0.62);
+  font-size: 13px;
+  transition: color 180ms ease, transform 180ms ease;
+}
+
+.footerButton:hover {
+  color: rgb(190 70 70);
+  transform: translateX(3px);
+}
+
+.resizeHandle {
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  right: -3px;
+  width: 7px;
+  height: 100%;
+  cursor: col-resize;
+}
+
+.resizeHandle::after {
+  position: absolute;
+  top: 0;
+  right: 3px;
+  width: 1px;
+  height: 100%;
+  background: transparent;
+  content: "";
+  transition: background-color 160ms ease;
+}
+
+.resizeHandle:hover::after,
+.resizeHandle:focus-visible::after {
+  background: rgb(226 109 101 / 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hoverHighlight,
+  .profileImage,
+  .navItem,
+  .marker,
+  .footerButton {
+    transition-duration: 0.01ms;
+  }
+}

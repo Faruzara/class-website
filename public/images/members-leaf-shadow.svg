@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500">
+  <defs>
+    <path id="leaf" d="M0 0C-23-19-24-61-5-91C16-65 27-23 0 0Z"/>
+    <path id="long-leaf" d="M0 0C-15-29-9-77 14-113C29-72 30-23 0 0Z"/>
+    <linearGradient id="falloff" x1="90%" y1="0%" x2="12%" y2="95%">
+      <stop stop-color="white"/>
+      <stop offset=".5" stop-color="white" stop-opacity=".74"/>
+      <stop offset="1" stop-color="white" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="fade" maskUnits="userSpaceOnUse" x="0" y="0" width="800" height="500">
+      <rect width="800" height="500" fill="url(#falloff)"/>
+    </mask>
+  </defs>
+  <g fill="white" mask="url(#fade)">
+    <g fill="none" stroke="white" stroke-linecap="round" opacity=".65">
+      <path d="M831-37C718 73 674 119 546 185S277 297 159 411" stroke-width="5"/>
+      <path d="M717 75C629 61 550 69 450 116S303 165 194 174" stroke-width="3"/>
+      <path d="M631 139C662 196 634 288 575 391" stroke-width="3"/>
+      <path d="M480 220C428 194 350 194 251 253" stroke-width="2.5"/>
+      <path d="M361 283C371 328 342 387 283 439" stroke-width="2"/>
+      <path d="M820 156C768 201 725 289 705 400" stroke-width="3"/>
+    </g>
+    <g opacity=".85">
+      <use href="#leaf" transform="translate(745 46) rotate(-34) scale(1.03)"/>
+      <use href="#long-leaf" transform="translate(720 75) rotate(98) scale(.92)"/>
+      <use href="#leaf" transform="translate(685 100) rotate(-58)"/>
+      <use href="#leaf" transform="translate(652 126) rotate(84) scale(1.05)"/>
+      <use href="#long-leaf" transform="translate(597 156) rotate(-44) scale(.92)"/>
+      <use href="#leaf" transform="translate(552 183) rotate(97) scale(.85)"/>
+      <use href="#leaf" transform="translate(502 209) rotate(-48) scale(.95)"/>
+      <use href="#long-leaf" transform="translate(458 231) rotate(85) scale(.83)"/>
+      <use href="#leaf" transform="translate(405 257) rotate(-38) scale(.8)"/>
+      <use href="#leaf" transform="translate(351 289) rotate(76) scale(.78)"/>
+      <use href="#long-leaf" transform="translate(292 325) rotate(-30) scale(.71)"/>
+      <use href="#leaf" transform="translate(228 365) rotate(62) scale(.72)"/>
+    </g>
+    <g opacity=".66">
+      <use href="#leaf" transform="translate(657 68) rotate(-28) scale(.82)"/>
+      <use href="#leaf" transform="translate(607 74) rotate(160) scale(.67)"/>
+      <use href="#long-leaf" transform="translate(553 82) rotate(-51) scale(.81)"/>
+      <use href="#leaf" transform="translate(495 101) rotate(164) scale(.78)"/>
+      <use href="#leaf" transform="translate(436 124) rotate(-53) scale(.84)"/>
+      <use href="#leaf" transform="translate(383 145) rotate(150) scale(.66)"/>
+      <use href="#long-leaf" transform="translate(321 160) rotate(-66) scale(.69)"/>
+      <use href="#leaf" transform="translate(259 169) rotate(157) scale(.62)"/>
+      <use href="#leaf" transform="translate(650 191) rotate(39) scale(.88)"/>
+      <use href="#long-leaf" transform="translate(647 241) rotate(-78) scale(.83)"/>
+      <use href="#leaf" transform="translate(628 287) rotate(105) scale(.81)"/>
+      <use href="#leaf" transform="translate(602 340) rotate(-59) scale(.78)"/>
+      <use href="#long-leaf" transform="translate(576 388) rotate(191) scale(.71)"/>
+      <use href="#leaf" transform="translate(424 206) rotate(-50) scale(.68)"/>
+      <use href="#leaf" transform="translate(374 209) rotate(145) scale(.67)"/>
+      <use href="#leaf" transform="translate(315 226) rotate(-64) scale(.64)"/>
+      <use href="#leaf" transform="translate(359 338) rotate(-66) scale(.7)"/>
+      <use href="#leaf" transform="translate(329 393) rotate(166) scale(.63)"/>
+    </g>
+    <g opacity=".53">
+      <use href="#long-leaf" transform="translate(787 192) rotate(-61) scale(.95)"/>
+      <use href="#leaf" transform="translate(762 227) rotate(83) scale(.89)"/>
+      <use href="#leaf" transform="translate(739 270) rotate(-63) scale(.96)"/>
+      <use href="#long-leaf" transform="translate(722 318) rotate(107) scale(.78)"/>
+      <use href="#leaf" transform="translate(710 369) rotate(-51) scale(.72)"/>
+    </g>
+  </g>
+</svg>
