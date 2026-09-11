@@ -6,7 +6,7 @@ export const TEMP_PERMISSION_OPTIONS: ReadonlyArray<{
   description: string;
 }> = [
   { value: "homepage", label: "Homepage", description: "Foto utama, informasi utama, dan pengumuman." },
-  { value: "schedule", label: "Schedule", description: "Jadwal dan pembagian periode." },
+  { value: "schedule", label: "Schedule", description: "Jadwal dan pembagian jam pelajaran." },
   { value: "members", label: "Members", description: "Data, foto, dan visibilitas anggota." },
   { value: "gallery", label: "Gallery", description: "Unggah, atur fokus, dan hapus galeri." },
   { value: "moments", label: "Moments", description: "Mengambil dan menerbitkan Moment." },

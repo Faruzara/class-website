@@ -5,6 +5,7 @@ import { Loader2, Plus, Trash2 } from "lucide-react";
 import type { JadwalItem } from "@/types";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const SCHOOL_PERIODS = Array.from({ length: 11 }, (_, index) => index + 1);
 
 export default function ScheduleEditor({ initialItems }: { initialItems: JadwalItem[] }) {
   const [items, setItems] = useState(initialItems);
@@ -55,11 +56,18 @@ export default function ScheduleEditor({ initialItems }: { initialItems: JadwalI
             <option value={1}>Week 1</option><option value={2}>Week 2</option>
           </select>
         </Field>
-        <Field label="Periode mulai">
-          <input className="input" type="number" min={1} max={16} value={form.start_period} onChange={(e) => setForm({ ...form, start_period: Number(e.target.value) })} />
+        <Field label="Mulai jam ke-">
+          <select className="input" value={form.start_period} onChange={(e) => {
+            const startPeriod = Number(e.target.value);
+            setForm({ ...form, start_period: startPeriod, end_period: Math.max(startPeriod, form.end_period) });
+          }}>
+            {SCHOOL_PERIODS.map((period) => <option key={period} value={period}>{period}</option>)}
+          </select>
         </Field>
-        <Field label="Periode selesai">
-          <input className="input" type="number" min={form.start_period} max={16} value={form.end_period} onChange={(e) => setForm({ ...form, end_period: Number(e.target.value) })} />
+        <Field label="Sampai jam ke-">
+          <select className="input" value={form.end_period} onChange={(e) => setForm({ ...form, end_period: Number(e.target.value) })}>
+            {SCHOOL_PERIODS.filter((period) => period >= form.start_period).map((period) => <option key={period} value={period}>{period}</option>)}
+          </select>
         </Field>
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-sm text-gray-600">Ruangan</label>
@@ -82,7 +90,7 @@ export default function ScheduleEditor({ initialItems }: { initialItems: JadwalI
                 <span className="w-16 text-xs font-semibold text-brand-700">{item.day}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-gray-900">{item.subject}</p>
-                  <p className="text-xs text-gray-500">Periode {item.start_period}–{item.end_period}{item.room ? ` · ${item.room}` : ""}</p>
+                  <p className="text-xs text-gray-500">Jam ke-{item.start_period}–{item.end_period}{item.room ? ` · ${item.room}` : ""}</p>
                 </div>
                 <button type="button" onClick={() => remove(item.id)} className="p-2 text-gray-400 hover:text-rose-600" aria-label={`Hapus ${item.subject}`}><Trash2 size={16} /></button>
               </div>

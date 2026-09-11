@@ -34,7 +34,7 @@ export default function PublicSchedule() {
   }, []);
 
   const weekItems = items.filter((item) => item.week === selectedWeek);
-  const maxPeriod = Math.max(10, ...weekItems.map((item) => item.end_period));
+  const maxPeriod = Math.min(11, Math.max(1, ...weekItems.map((item) => item.end_period)));
 
   return (
     <section>
@@ -79,7 +79,7 @@ export default function PublicSchedule() {
             {DAYS.map((day) => {
               const dayItems = weekItems.filter((item) => item.day === day);
               if (dayItems.length === 0) return null;
-              return <section key={day}><h2 className="mb-3 font-semibold text-gray-900">{day}</h2><div className="space-y-2">{dayItems.map((item) => <div key={item.id} className="border-l-2 border-brand-500 bg-white px-4 py-3"><div className="flex items-start justify-between gap-4"><p className="font-medium text-gray-900">{item.subject}</p><span className="shrink-0 text-xs text-gray-500">Periode {item.start_period}–{item.end_period}</span></div>{item.room && <p className="mt-1 text-xs text-gray-500">{item.room}</p>}</div>)}</div></section>;
+              return <section key={day}><h2 className="mb-3 font-semibold text-gray-900">{day}</h2><div className="space-y-2">{dayItems.map((item) => <div key={item.id} className="border-l-2 border-brand-500 bg-white px-4 py-3"><div className="flex items-start justify-between gap-4"><p className="font-medium text-gray-900">{item.subject}</p><span className="shrink-0 text-xs text-gray-500">Jam ke-{item.start_period}–{item.end_period}</span></div>{item.room && <p className="mt-1 text-xs text-gray-500">{item.room}</p>}</div>)}</div></section>;
             })}
           </div>
         </>

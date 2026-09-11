@@ -4,6 +4,8 @@ import { createJadwalItem, getJadwal } from "@/lib/db";
 import type { ApiResponse, JadwalItem } from "@/types";
 import { supabaseAdmin } from "@/lib/supabase";
 
+const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+
 export async function GET() {
   const session = await getEditorSession("schedule");
   if (!session) return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -23,7 +25,16 @@ export async function POST(req: NextRequest) {
     end_period: Number(body.end_period),
   } as Omit<JadwalItem, "id">;
 
-  if (!item.subject || ![1, 2].includes(item.week) || !item.day || item.start_period < 1 || item.end_period < item.start_period) {
+  if (
+    !item.subject
+    || ![1, 2].includes(item.week)
+    || !DAYS.includes(item.day)
+    || !Number.isInteger(item.start_period)
+    || !Number.isInteger(item.end_period)
+    || item.start_period < 1
+    || item.end_period > 11
+    || item.end_period < item.start_period
+  ) {
     return NextResponse.json<ApiResponse>({ success: false, error: "Data jadwal tidak valid" }, { status: 400 });
   }
 
@@ -36,7 +47,7 @@ export async function POST(req: NextRequest) {
     .gte("end_period", item.start_period)
     .limit(1);
   if (overlap?.length) {
-    return NextResponse.json<ApiResponse>({ success: false, error: "Periode tersebut bertabrakan dengan jadwal lain" }, { status: 409 });
+    return NextResponse.json<ApiResponse>({ success: false, error: "Jam pelajaran tersebut bertabrakan dengan jadwal lain" }, { status: 409 });
   }
 
   await createJadwalItem(item);
