@@ -155,7 +155,7 @@ export default function HomepageExperience({
       if (mediaRef.current) {
         mediaRef.current.style.transform = `scale(${1.35 - 0.35 * easedExpansion})`;
         mediaRef.current.style.filter = visual.blurOpacity > 0.001
-          ? `blur(${7 * visual.blurOpacity}px) saturate(${1 - 0.22 * visual.blurOpacity})`
+          ? `blur(${2 * visual.blurOpacity}px)`
           : "none";
       }
       if (scrimRef.current) scrimRef.current.style.opacity = String(0.2 * easedExpansion);
