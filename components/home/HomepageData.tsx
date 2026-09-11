@@ -272,7 +272,7 @@ function CoreMembersCarousel({ items }: { items: CoreMemberItem[] }) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<Array<HTMLElement | null>>([]);
   const activeIndexRef = useRef(initialIndex);
-  const dragRef = useRef({ active: false, pointerId: -1, lastX: 0, lastDirection: 0, distanceSinceCommit: 0, releasing: false });
+  const dragRef = useRef({ active: false, pointerId: -1, lastX: 0, distanceSinceCommit: 0, releasing: false, lastCommitAt: 0 });
   const autoTimerRef = useRef<number | null>(null);
   const resumeTimerRef = useRef<number | null>(null);
   const initializationRef = useRef(true);
@@ -399,6 +399,20 @@ function CoreMembersCarousel({ items }: { items: CoreMemberItem[] }) {
     const settled = motionRef.current === null && now >= transitionUntilRef.current;
     if (settled) normalizeInfinitePosition(viewport);
 
+    const threshold = getCarouselWidths().activeWidth * 0.16;
+    const canCommitDrag = drag.active && now - drag.lastCommitAt >= 110;
+    if ((settled || canCommitDrag) && Math.abs(drag.distanceSinceCommit) >= threshold) {
+      const direction = drag.distanceSinceCommit < 0 ? 1 : -1;
+      const next = Math.max(0, Math.min(activeIndexRef.current + direction, renderedItems.length - 1));
+      if (next !== activeIndexRef.current) {
+        drag.lastCommitAt = now;
+        changeActiveCard(next, now);
+      } else {
+        beginOffsetMotion(now, 180);
+      }
+      drag.distanceSinceCommit = 0;
+    }
+
     if (drag.releasing) {
       drag.releasing = false;
       if (drag.distanceSinceCommit !== 0) {
@@ -474,7 +488,7 @@ function CoreMembersCarousel({ items }: { items: CoreMemberItem[] }) {
     clearAutoTimer();
     clearProgrammaticScroll();
     transitionUntilRef.current = 0;
-    dragRef.current = { active: false, pointerId: -1, lastX: 0, lastDirection: 0, distanceSinceCommit: 0, releasing: false };
+    dragRef.current = { active: false, pointerId: -1, lastX: 0, distanceSinceCommit: 0, releasing: false, lastCommitAt: 0 };
     viewport.classList.add("is-repositioning");
     activeIndexRef.current = initialIndex;
     setActiveIndex(initialIndex);
@@ -522,7 +536,7 @@ function CoreMembersCarousel({ items }: { items: CoreMemberItem[] }) {
       const now = performance.now();
       beginOffsetMotion(now, Math.max(180, transitionUntilRef.current - now));
     }
-    dragRef.current = { active: true, pointerId: event.pointerId, lastX: event.clientX, lastDirection: 0, distanceSinceCommit: 0, releasing: false };
+    dragRef.current = { active: true, pointerId: event.pointerId, lastX: event.clientX, distanceSinceCommit: 0, releasing: false, lastCommitAt: 0 };
     viewport.classList.add("is-dragging");
     viewport.setPointerCapture?.(event.pointerId);
     pauseAutoSlide();
@@ -536,23 +550,8 @@ function CoreMembersCarousel({ items }: { items: CoreMemberItem[] }) {
     event.preventDefault();
     const delta = event.clientX - dragRef.current.lastX;
     dragRef.current.lastX = event.clientX;
-    const direction = Math.sign(delta);
-    if (direction !== 0 && dragRef.current.lastDirection !== 0 && direction !== dragRef.current.lastDirection) {
-      dragRef.current.distanceSinceCommit = 0;
-    }
-    if (direction !== 0) dragRef.current.lastDirection = direction;
-    dragRef.current.distanceSinceCommit += delta;
-    const threshold = getCarouselWidths().activeWidth * 0.16;
-    if (Math.abs(dragRef.current.distanceSinceCommit) >= threshold) {
-      const direction = dragRef.current.distanceSinceCommit < 0 ? 1 : -1;
-      const next = Math.max(0, Math.min(activeIndexRef.current + direction, renderedItems.length - 1));
-      if (next !== activeIndexRef.current) {
-        changeActiveCard(next, performance.now());
-        dragRef.current.distanceSinceCommit += direction * threshold;
-      } else {
-        dragRef.current.distanceSinceCommit = 0;
-      }
-    }
+    const limit = getCarouselWidths().activeWidth * 0.45;
+    dragRef.current.distanceSinceCommit = Math.max(-limit, Math.min(limit, dragRef.current.distanceSinceCommit + delta));
     requestMotionFrame();
   }
 

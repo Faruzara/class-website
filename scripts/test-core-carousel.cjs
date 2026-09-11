@@ -223,11 +223,13 @@ test('continuous held drag advances in order after each expansion, in both infin
   c.up(x);c.advance(700);assert.ok(Math.abs(c.centerOffset)<.01);c.cleanup();
 });
 
-test('rapid movements advance once per pointer event without moving on their own',()=>{
+test('rapid movements stay responsive with the 110ms safety guard',()=>{
   const c=harness();c.advance(700);c.down(1000);c.move(880);c.advance(17);assert.equal(c.logical,1);
   c.advance(transitionMs);assert.equal(c.logical,1);
-  for(let i=0;i<3;i++){c.move(760-i*100);c.advance(17);assert.equal(c.logical,i+2);assert.ok(c.frames<=1);}
-  c.up(560);c.advance(700);assert.equal(c.logical,4);assert.ok(Math.abs(c.centerOffset)<.01);c.cleanup();
+  c.move(760);c.advance(17);assert.equal(c.logical,2);
+  c.move(660);c.advance(80);assert.equal(c.logical,2);
+  c.advance(50);assert.equal(c.logical,3);
+  c.up(660);c.advance(700);assert.equal(c.logical,3);assert.ok(Math.abs(c.centerOffset)<.01);c.cleanup();
 });
 
 test('holding the pointer pauses auto slide, release restarts only one timer after inactivity',()=>{
@@ -252,7 +254,7 @@ test('touch gesture and a fresh drag during settling preserve the active card an
   c.move(220,{pointerType:'touch'});c.up(220,{pointerType:'touch'});
   // A second press may arrive before the pending release frame has painted.
   c.down(200,{pointerType:'touch'});c.advance(700);c.up(200,{pointerType:'touch'});c.advance(700);
-  assert.equal(c.logical,2);assert.ok(Math.abs(c.centerOffset)<.01);c.cleanup();
+  assert.equal(c.logical,1);assert.ok(Math.abs(c.centerOffset)<.01);c.cleanup();
 });
 
 test('dragging during auto expansion settles without double increment or a second timer',()=>{

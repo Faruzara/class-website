@@ -84,8 +84,8 @@ export function HomepageEditor({ settings, ownerMode = false }: { settings: Site
 
       <section className="card">
         <label className="mb-2 block font-semibold text-gray-900">Tentang Kelas</label>
-        <textarea className="input min-h-32 resize-y" value={about} maxLength={500} onChange={(event) => setAbout(event.target.value)} />
-        <p className="mt-2 text-xs text-gray-500">Gunakan 2–4 baris singkat. {about.length}/500</p>
+        <textarea className="input min-h-32 resize-y" value={about} maxLength={240} onChange={(event) => setAbout(event.target.value)} />
+        <p className="mt-2 text-xs text-gray-500">Gunakan 2–4 baris singkat. {about.length}/240</p>
       </section>
 
       <div className="flex items-center gap-3">

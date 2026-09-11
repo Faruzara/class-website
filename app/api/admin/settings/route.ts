@@ -98,8 +98,8 @@ async function updateSettings(req: NextRequest) {
     if (typeof payload.about_text !== "undefined" && !payload.about_text) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Tentang Kelas tidak boleh kosong" }, { status: 400 });
     }
-    if (payload.about_text && payload.about_text.length > 500) {
-      return NextResponse.json<ApiResponse>({ success: false, error: "Tentang Kelas maksimal 500 karakter" }, { status: 400 });
+    if (payload.about_text && payload.about_text.length > 240) {
+      return NextResponse.json<ApiResponse>({ success: false, error: "Tentang Kelas maksimal 240 karakter" }, { status: 400 });
     }
     if (payload.hero_image_url && !isManagedMediaUrl(payload.hero_image_url)) {
       return NextResponse.json<ApiResponse>({ success: false, error: "Foto utama harus berasal dari storage project ini" }, { status: 400 });

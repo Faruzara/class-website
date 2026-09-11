@@ -100,8 +100,9 @@
 .accordionSection {
   position: relative;
   z-index: 2;
+  margin-top: 56px;
   border-top: 1px solid rgb(17 24 39 / 0.08);
-  padding: 28px 0 80px;
+  padding: 40px 0 80px;
   background: #fff;
 }
 
@@ -423,7 +424,8 @@
   .captionBody { display: none; }
   .accordionSection {
     margin-inline: -20px;
-    padding: 22px 5px 48px;
+    margin-top: 40px;
+    padding: 32px 5px 48px;
   }
   .accordion {
     height: 300px;
