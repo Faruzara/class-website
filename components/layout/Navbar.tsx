@@ -336,7 +336,8 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const overHero = isHome && overDarkSurface;
 
   return (
-    <header
+    <>
+      <header
       className={clsx(
         // Keep the transparent mobile header on its own composited layer while
         // photo/reveal layers scroll underneath it. Do not animate its position.
@@ -363,19 +364,6 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
           </div>
         </section> : null}
 
-        {activePanel === "feedback" ? <section aria-label="Kirim feedback" className="overflow-hidden rounded-lg border border-white/80 bg-white/85 shadow-[0_18px_45px_rgba(31,41,55,0.14)] backdrop-blur-md">
-          <div className="flex items-center justify-between px-5 pb-2 pt-4"><div><p className="font-mono text-[10px] text-brand-700">FEEDBACK</p><h2 className="mt-1 text-sm font-semibold">Bantu kami memperbaiki situs</h2></div><button type="button" onClick={() => setActivePanel(null)} className="grid size-9 place-items-center rounded-md text-gray-500 transition-colors hover:bg-white/70 hover:text-gray-900" aria-label="Tutup feedback"><X size={16} /></button></div>
-          {feedbackState === "sent" ? <div className="px-5 py-10 text-center"><CheckCircle2 size={26} className="mx-auto text-emerald-600" /><p className="mt-3 text-sm font-semibold">Feedback sudah terkirim.</p><p className="mt-1 text-xs text-gray-500">Terima kasih sudah memberi tahu.</p><button type="button" onClick={() => setFeedbackState("idle")} className="mt-5 text-xs font-semibold text-brand-700">Kirim feedback lain</button></div> : <form onSubmit={sendFeedback} className="space-y-4 px-5 py-5">
-            <div className="relative inline-grid grid-cols-2 rounded-md bg-gray-100 p-1" aria-label="Jenis feedback">
-              <span aria-hidden="true" className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded bg-gray-900 shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none ${feedbackType === "feature" ? "translate-x-full" : "translate-x-0"}`} />
-              {([["bug", "Bug"], ["feature", "Request fitur"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setFeedbackType(value)} aria-pressed={feedbackType === value} className={`relative z-10 min-h-9 min-w-[6.5rem] px-3 text-xs font-semibold transition-colors duration-300 ${feedbackType === value ? "text-white" : "text-gray-500 hover:text-gray-900"}`}>{label}</button>)}
-            </div>
-            <div><label htmlFor="navbar-feedback" className="mb-1.5 block text-xs text-gray-600">Apa yang terjadi atau ingin ditambahkan?</label><textarea id="navbar-feedback" required minLength={10} maxLength={1000} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} className="min-h-28 w-full resize-y rounded-md border border-surface-border bg-white/90 px-3 py-2 text-sm outline-none transition-colors focus:border-brand-500" placeholder="Ceritakan secara singkat..." /></div>
-            <input name="website" className="hidden" tabIndex={-1} autoComplete="off" />
-            {feedbackError ? <p role="alert" className="text-xs text-rose-700">{feedbackError}</p> : null}
-            <div className="flex justify-end"><button disabled={feedbackState === "sending" || feedbackMessage.trim().length < 10} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-brand-600 bg-brand-600 px-5 text-sm font-semibold text-white shadow-sm transition-[transform,background-color,box-shadow] duration-200 hover:-translate-y-px hover:bg-brand-700 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none">{feedbackState === "sending" ? <Loader2 size={15} className="animate-spin" /> : <MessageSquareText size={15} />}Kirim</button></div>
-          </form>}
-        </section> : null}
       </div>
 
       <MobileLineMenu
@@ -387,55 +375,106 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         onClose={() => setOpen(false)}
       />
 
-      <nav
-        aria-label="Dock navigasi utama"
+      </header>
+
+      <div
+        data-navbar-actions
         className={clsx(
-          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1 rounded-2xl border border-white/90 bg-white/85 p-1.5 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.16)] backdrop-blur-lg transition-[opacity,transform] duration-300",
+          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] max-w-[calc(100vw-1rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl",
           open && "max-md:pointer-events-none max-md:translate-y-4 max-md:opacity-0"
         )}
       >
-        {showCreator ? (
-          <a
-            href={creatorUrl || "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(event) => { if (!creatorUrl) event.preventDefault(); }}
-            aria-label="GitHub pembuat situs"
-            className="grid h-11 min-w-12 place-items-center rounded-xl text-gray-900 transition-colors hover:bg-white animate-in fade-in zoom-in"
-          >
-            <Github size={18} strokeWidth={1.8} />
-          </a>
-        ) : (
-          <Link
-            href="/"
-            aria-label="XI TP2 — Beranda"
-            className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white"
-          >
-            XI TP2
-          </Link>
-        )}
+        <div
+          aria-hidden={activePanel !== "feedback"}
+          inert={activePanel !== "feedback"}
+          className={clsx(
+            "grid min-w-0 overflow-hidden transition-[width,grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            activePanel === "feedback"
+              ? "w-[min(calc(100vw-2rem),28rem)] grid-rows-[1fr] opacity-100"
+              : "pointer-events-none w-0 grid-rows-[0fr] opacity-0"
+          )}
+        >
+          <div className="min-h-0 overflow-hidden">
+              <section aria-label="Kirim feedback" className="w-[min(calc(100vw-2rem),28rem)] pb-2 text-gray-900">
+                <div className="flex items-center justify-between px-2 pb-2 pt-1">
+                  <div>
+                    <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-brand-700">Feedback</p>
+                    <h2 className="mt-1 text-sm font-semibold">Bantu kami memperbaiki situs</h2>
+                  </div>
+                  <button type="button" onClick={() => setActivePanel(null)} className="grid size-8 place-items-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-900" aria-label="Tutup feedback"><X size={15} /></button>
+                </div>
 
-        <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
+                {feedbackState === "sent" ? (
+                  <div className="px-3 py-7 text-center">
+                    <CheckCircle2 size={24} className="mx-auto text-emerald-600" />
+                    <p className="mt-2 text-sm font-semibold">Feedback sudah terkirim.</p>
+                    <button type="button" onClick={() => setFeedbackState("idle")} className="mt-3 text-xs font-semibold text-brand-700">Kirim feedback lain</button>
+                  </div>
+                ) : (
+                  <form onSubmit={sendFeedback} className="space-y-3 px-2">
+                    <div className="relative inline-grid grid-cols-2 rounded-lg bg-gray-900/[0.05] p-1" aria-label="Jenis feedback">
+                      <span aria-hidden="true" className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-md bg-white shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none ${feedbackType === "feature" ? "translate-x-full" : "translate-x-0"}`} />
+                      {([["bug", "Bug"], ["feature", "Request fitur"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setFeedbackType(value)} aria-pressed={feedbackType === value} className={`relative z-10 min-h-8 min-w-[6rem] px-3 text-[11px] font-semibold transition-colors ${feedbackType === value ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}>{label}</button>)}
+                    </div>
+                    <textarea id="navbar-feedback" aria-label="Pesan feedback" required minLength={10} maxLength={1000} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} className="h-24 w-full resize-none rounded-xl border border-white/80 bg-white/60 px-3 py-2.5 text-sm leading-6 outline-none transition-colors placeholder:text-gray-400 focus:border-brand-400" placeholder="Ceritakan secara singkat..." />
+                    <input name="website" className="hidden" tabIndex={-1} autoComplete="off" />
+                    {feedbackError ? <p role="alert" className="text-xs text-rose-700">{feedbackError}</p> : null}
+                    <div className="flex justify-end"><button disabled={feedbackState === "sending" || feedbackMessage.trim().length < 10} className="inline-flex size-10 items-center justify-center rounded-xl bg-white text-gray-800 shadow-sm transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Kirim feedback">{feedbackState === "sending" ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}</button></div>
+                  </form>
+                )}
+              </section>
+          </div>
+        </div>
 
-        {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              aria-label={label}
-              aria-current={active ? "page" : undefined}
-              className={clsx(
-                "relative flex h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 text-[9px] font-medium leading-none transition-colors sm:min-w-12",
-                active ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
-              )}
+        <nav aria-label="Dock navigasi utama" className="flex items-center justify-center gap-1">
+          {showCreator ? (
+            <a
+              href={creatorUrl || "#"}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(event) => { if (!creatorUrl) event.preventDefault(); }}
+              aria-label="GitHub pembuat situs"
+              className="group relative grid h-11 min-w-12 place-items-center rounded-xl bg-white text-gray-900 shadow-sm animate-in fade-in zoom-in"
             >
-              <Icon size={16} strokeWidth={active ? 2 : 1.7} aria-hidden="true" />
-              <span>{label}</span>
-            </Link>
-          );
-        })}
-      </nav>
-    </header>
+              <Github size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            </a>
+          ) : (
+            <Link href="/" aria-label="XI TP2 — Beranda" className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white">XI TP2</Link>
+          )}
+
+          <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
+
+          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                aria-label={label}
+                aria-current={active ? "page" : undefined}
+                className={clsx(
+                  "group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]",
+                  active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+                )}
+              >
+                <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{label}</span>
+                <Icon size={18} strokeWidth={active ? 2 : 1.7} className={clsx("transition-transform group-hover:scale-110 group-active:scale-110", active && "scale-110")} aria-hidden="true" />
+              </Link>
+            );
+          })}
+
+          <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+            <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Pengumuman</span>
+            <Bell size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            {unread ? <span className="absolute right-2 top-2 size-1.5 rounded-full bg-brand-500 ring-2 ring-white" aria-label="Ada pengumuman baru" /> : null}
+          </button>
+
+          <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+            <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
+            <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+          </button>
+        </nav>
+      </div>
+    </>
   );
 }
