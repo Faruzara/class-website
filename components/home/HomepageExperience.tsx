@@ -255,7 +255,7 @@ export default function HomepageExperience({
   }, []);
 
   return (
-    <div ref={rootRef} className="hero-experience relative overflow-x-clip bg-white">
+    <div ref={rootRef} className="hero-experience relative overflow-x-clip bg-[#121212]">
       <div
         ref={splashRef}
         className="fixed -inset-[2px] z-[999] flex min-h-[calc(100svh+4px)] items-center justify-center bg-[#121212] opacity-100 transition-opacity duration-500"
@@ -302,7 +302,7 @@ export default function HomepageExperience({
         </div>
       </div>
 
-      <section data-navbar-tone="dark" aria-label="XI Teknik Pemesinan 2" className="relative z-10 h-[255svh] bg-[#121212] motion-reduce:h-[100dvh] md:h-[255vh] md:motion-reduce:h-screen">
+      <section data-navbar-tone="dark" aria-label="XI Teknik Pemesinan 2" className="relative z-10 h-[255svh] motion-reduce:h-[100dvh] md:h-[255vh] md:motion-reduce:h-screen">
         <div className="sticky top-0 h-[100dvh] min-h-screen md:h-screen">
           <div ref={titleRef} className="absolute inset-0 z-20 flex items-center justify-center px-5 text-center text-white [will-change:opacity,transform]">
             <HeroShuffleTitle />
@@ -314,7 +314,7 @@ export default function HomepageExperience({
         </div>
       </section>
 
-      <section ref={aboutRef} aria-labelledby="hero-about-heading" className="hero-story-about relative z-10 flex min-h-[100svh] items-center overflow-hidden md:min-h-screen">
+      <section ref={aboutRef} aria-labelledby="hero-about-heading" className="hero-story-about relative z-10 flex min-h-[100svh] items-center overflow-hidden bg-white md:min-h-screen">
         <div className="technical-grid pointer-events-none absolute inset-0" aria-hidden="true">
           <span className="technical-grid-marker technical-grid-marker-one" />
           <span className="technical-grid-marker technical-grid-marker-two" />
