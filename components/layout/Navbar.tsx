@@ -17,6 +17,9 @@ const NAV_LINKS = [
   { href: "/galeri", label: "Galeri", icon: Images },
 ];
 
+const SCROLL_TICK_COUNT = 60;
+const SCROLL_MAJOR_EVERY = 5;
+
 const LINE_FALLOFF = (progress: number) => progress * progress * (3 - 2 * progress);
 
 function MobileLineMenu({
@@ -280,7 +283,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       if (!track || !marker) return;
       const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const progress = maximumScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maximumScroll)) : 0;
-      const edge = 14;
+      const edge = 4;
       const markerX = edge + Math.max(0, track.clientWidth - edge * 2) * progress;
       marker.style.transform = `translate3d(${markerX}px, 0, 0) translateX(-50%)`;
     };
@@ -420,21 +423,26 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         <div
           ref={progressTrackRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-full mb-2 h-12 overflow-hidden rounded-xl bg-[#121212] shadow-[0_8px_24px_rgba(17,24,39,0.16)]"
+          className="pointer-events-none absolute inset-x-0 bottom-full mb-2 h-[22px]"
         >
           <span
             ref={progressMarkerRef}
-            className="absolute left-0 top-2 h-0 w-0 border-x-[4px] border-t-[7px] border-x-transparent border-t-white/35 [will-change:transform]"
+            className="absolute left-0 top-0 h-0 w-0 border-x-[4px] border-t-[6px] border-x-transparent border-t-gray-900/35 [will-change:transform]"
           />
-          <div className="absolute inset-x-3 bottom-2.5 h-3">
-            <span
-              className="absolute inset-x-0 bottom-0 h-2 opacity-50"
-              style={{ backgroundImage: "repeating-linear-gradient(to right, rgba(255,255,255,0.42) 0 1px, transparent 1px 8px)" }}
-            />
-            <span
-              className="absolute inset-0 opacity-55"
-              style={{ backgroundImage: "repeating-linear-gradient(to right, rgba(255,255,255,0.55) 0 1px, transparent 1px 75px)" }}
-            />
+          <div className="absolute inset-x-0 bottom-0 flex h-[14px] items-end justify-between">
+            {Array.from({ length: SCROLL_TICK_COUNT }, (_, index) => {
+              const major = index % SCROLL_MAJOR_EVERY === 0;
+              return (
+                <span
+                  key={index}
+                  className="w-px shrink-0"
+                  style={{
+                    height: major ? "12px" : "7px",
+                    background: major ? "rgba(17,24,39,0.3)" : "rgba(17,24,39,0.15)",
+                  }}
+                />
+              );
+            })}
           </div>
         </div>
 
