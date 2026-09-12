@@ -274,7 +274,7 @@ export default function HomepageExperience({
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div ref={stageRef} className="hero-story-backdrop pointer-events-none sticky top-0 h-[100dvh] overflow-hidden bg-[#121212] md:h-screen">
+        <div ref={stageRef} className="hero-story-backdrop pointer-events-none sticky top-0 h-[100dvh] min-h-screen overflow-hidden bg-[#121212] md:h-screen">
           <div
             ref={frameRef}
             className="hero-expand-frame absolute inset-0 overflow-hidden [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
@@ -302,8 +302,8 @@ export default function HomepageExperience({
         </div>
       </div>
 
-      <section data-navbar-tone="dark" aria-label="XI Teknik Pemesinan 2" className="relative z-10 h-[255svh] motion-reduce:h-[100dvh] md:h-[255vh] md:motion-reduce:h-screen">
-        <div className="sticky top-0 h-[100dvh] md:h-screen">
+      <section data-navbar-tone="dark" aria-label="XI Teknik Pemesinan 2" className="relative z-10 h-[255svh] bg-[#121212] motion-reduce:h-[100dvh] md:h-[255vh] md:motion-reduce:h-screen">
+        <div className="sticky top-0 h-[100dvh] min-h-screen md:h-screen">
           <div ref={titleRef} className="absolute inset-0 z-20 flex items-center justify-center px-5 text-center text-white [will-change:opacity,transform]">
             <HeroShuffleTitle />
           </div>
