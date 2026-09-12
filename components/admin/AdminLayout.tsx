@@ -37,6 +37,7 @@ const CONTENT_ITEMS: NavItem[] = [
   { href: "/admin/jadwal", label: "Schedule", permission: "schedule" },
   { href: "/admin/anggota", label: "Members", permission: "members" },
   { href: "/admin/galeri", label: "Gallery", permission: "gallery" },
+  { href: "/admin/moments", label: "Moments", permission: "moments" },
   { href: "/admin/pengumuman", label: "Announcements", permission: "homepage" },
 ];
 const ACCESS_ITEMS: NavItem[] = [

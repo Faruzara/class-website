@@ -3,11 +3,19 @@ import { readMomentForm } from '@/lib/moments-form';
 import { parseMomentCaptureTime } from '@/lib/moment-time';
 import { validateMomentImages } from '@/lib/moments-image';
 import { publishMoment } from '@/lib/moments-publish';
-import { checkMomentOrigin, MomentError, momentFailure, momentJson, requireMomentEditor } from '@/lib/moments-server';
+import { checkMomentOrigin, listMoments, MomentError, momentFailure, momentJson, momentSummary, requireMomentEditor } from '@/lib/moments-server';
 import { logActivity } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+export async function GET() {
+  try {
+    await requireMomentEditor();
+    const rows = await listMoments(false, 24);
+    return momentJson({ items: rows.map(momentSummary), serverNow: new Date().toISOString() });
+  } catch (error) { return momentFailure(error); }
+}
 
 export async function POST(request: Request) {
   const receivedAt = Date.now();

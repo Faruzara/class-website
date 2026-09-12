@@ -94,6 +94,7 @@ function permissionForAdminPath(pathname: string): string | null {
   if (pathname.startsWith("/admin/jadwal")) return "schedule";
   if (pathname.startsWith("/admin/anggota")) return "members";
   if (pathname.startsWith("/admin/galeri")) return "gallery";
+  if (pathname.startsWith("/admin/moments")) return "moments";
   return null;
 }
 

@@ -6,14 +6,15 @@ import { useMoments } from '@/components/home/useMoments';
 import { readMomentResponse } from '@/lib/moments';
 import { formatMomentTimestamp } from '@/lib/moment-time';
 
-export default function MomentDashboardActions({ canManage = false }: { canManage?: boolean }) {
+export default function MomentDashboardActions({ canManage = false, showActive = false }: { canManage?: boolean; showActive?: boolean }) {
   const [open, setOpen] = useState(false);
   const [manage, setManage] = useState(false);
   const [notice, setNotice] = useState('');
   const [deleteError, setDeleteError] = useState('');
   const [deleting, setDeleting] = useState<string | null>(null);
   const deleteRef = useRef(false);
-  const { items, loading, error, refresh } = useMoments('/api/owner/moments', canManage && manage);
+  const displayActive = showActive || (canManage && manage);
+  const { items, loading, error, refresh } = useMoments('/api/admin/moments', displayActive);
   useEffect(() => {
     if (!notice) return;
     const timer = setTimeout(() => setNotice(''), 3500);
@@ -38,7 +39,7 @@ export default function MomentDashboardActions({ canManage = false }: { canManag
     {canManage && <button type="button" onClick={() => setManage(value => !value)} aria-expanded={manage} className="btn-secondary text-sm">Moments Aktif</button>}
     {notice && <p role="status" className="self-center text-xs text-gray-500">{notice}</p>}
     {open && <MomentCameraDialog onClose={() => setOpen(false)} onPublished={() => { setNotice('Moment terkirim'); refresh(); }} />}
-    {canManage && manage && <div className="basis-full min-w-0 rounded-xl border border-surface-border bg-white p-4">
+    {displayActive && <div className="basis-full min-w-0 rounded-xl border border-surface-border bg-white p-4">
       <h3 className="mb-3 text-sm font-medium text-gray-700">Moments Aktif</h3>
       {(error || deleteError) && <p role="alert" className="mb-3 text-xs leading-relaxed text-brand-600">{deleteError || error}</p>}
       {loading ? <p className="text-xs text-gray-500">Memuat Moments…</p> : !error && items.length === 0 ? <p className="text-xs text-gray-500">Belum ada Moment aktif.</p> : null}
@@ -50,9 +51,9 @@ export default function MomentDashboardActions({ canManage = false }: { canManag
             <p>{item.capturedAt ? 'Dipotret' : 'Dipublikasikan'}: {formatMomentTimestamp(item.capturedAt ?? item.createdAt)} WIB</p>
             {!item.cleanupPending && <p>Berakhir: {new Date(item.expiresAt).toLocaleString('id-ID')}</p>}
           </div>
-          <button type="button" onClick={() => void remove(item.id)} disabled={!!deleting} aria-label={item.cleanupPending ? 'Bersihkan sisa Moment' : 'Hapus Moment'} className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-400 hover:text-brand-600 disabled:opacity-40">
+          {canManage && <button type="button" onClick={() => void remove(item.id)} disabled={!!deleting} aria-label={item.cleanupPending ? 'Bersihkan sisa Moment' : 'Hapus Moment'} className="flex h-11 w-11 shrink-0 items-center justify-center text-gray-400 hover:text-brand-600 disabled:opacity-40">
             {deleting === item.id ? <Loader2 size={16} className="animate-spin motion-reduce:animate-none" /> : <Trash2 size={16} />}
-          </button>
+          </button>}
         </div>)}
       </div>
     </div>}

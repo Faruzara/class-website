@@ -83,10 +83,10 @@ export function ownerMomentSummary(row: MomentRow): OwnerMomentSummary {
     creatorLabel: row.created_by_label,
   };
 }
-export async function listMoments(manage = false) {
+export async function listMoments(manage = false, limit = 3) {
   // Database now(), never browser time. Service-role-only RPC, no original URL DTO.
   let query = momentsStore.rpc('list_moments', { p_manage: manage });
-  if (!manage) query = query.limit(3);
+  if (!manage) query = query.limit(limit);
   const { data, error } = await query;
   if (error) throw error;
   return (data ?? []) as MomentRow[];

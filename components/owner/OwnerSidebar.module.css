@@ -68,8 +68,16 @@
 .mobileAvatar {
   width: 32px;
   height: 32px;
+  overflow: hidden;
   border-radius: 6px;
   cursor: default;
+}
+
+.mobileAvatar img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .profileImage:hover,
