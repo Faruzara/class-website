@@ -17,7 +17,7 @@ const NAV_LINKS = [
   { href: "/galeri", label: "Galeri", icon: Images },
 ];
 
-const SCROLL_TICK_COUNT = 60;
+const SCROLL_TICK_COUNT = 56;
 const SCROLL_MAJOR_EVERY = 5;
 
 const LINE_FALLOFF = (progress: number) => progress * progress * (3 - 2 * progress);
@@ -217,7 +217,6 @@ function NavbarActions({ activePanel, unread, onToggle }: { activePanel: "announ
 export default function Navbar({ announcements = [] }: { announcements?: Pengumuman[] }) {
   const pathname = usePathname();
   const isHome = pathname === "/";
-  const [open, setOpen] = useState(false);
   const [overDarkSurface, setOverDarkSurface] = useState(isHome);
   const [showCreator, setShowCreator] = useState(false);
   const [creatorUrl, setCreatorUrl] = useState(CREATOR_GITHUB_URL);
@@ -260,7 +259,6 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   }, [activePanel]);
 
   function togglePanel(panel: "announcements" | "feedback") {
-    setOpen(false);
     if (activePanel === panel) {
       setActivePanel(null);
     } else {
@@ -395,39 +393,44 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         <div className="relative z-50 ml-auto flex items-center gap-1">
           <span className="mr-2 hidden text-xs font-medium tracking-wide opacity-70 lg:block">SMKN Jambu</span>
           <NavbarActions activePanel={activePanel} unread={unread} onToggle={togglePanel} />
-          <button className="grid size-10 place-items-center md:hidden" onClick={() => { setActivePanel(null); setOpen((value) => !value); }} aria-label={open ? "Tutup menu" : "Buka menu"} aria-expanded={open}>
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
         </div>
       </nav>
-
-      <MobileLineMenu
-        open={open}
-        pathname={pathname}
-        darkSurface={isHome && overDarkSurface}
-        instagramUrl={socialLinks.instagram}
-        tiktokUrl={socialLinks.tiktok}
-        onClose={() => setOpen(false)}
-      />
 
       </header>
 
       <div
+        aria-label="Media sosial"
+        className="fixed right-3 top-1/2 z-[65] flex -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-white/75 bg-white/65 p-1.5 text-gray-600 shadow-[0_8px_24px_rgba(17,24,39,0.10)] backdrop-blur-lg sm:right-5"
+      >
+        {socialLinks.instagram ? (
+          <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid size-9 place-items-center rounded-xl transition-[background-color,color,transform] hover:scale-105 hover:bg-white hover:text-brand-600">
+            <Instagram size={16} strokeWidth={1.7} aria-hidden="true" />
+          </a>
+        ) : (
+          <span aria-hidden="true" className="grid size-9 place-items-center rounded-xl opacity-40"><Instagram size={16} strokeWidth={1.7} /></span>
+        )}
+        {socialLinks.tiktok ? (
+          <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="grid size-9 place-items-center rounded-xl transition-[background-color,color,transform] hover:scale-105 hover:bg-white hover:text-brand-600">
+            <Music2 size={16} strokeWidth={1.7} aria-hidden="true" />
+          </a>
+        ) : (
+          <span aria-hidden="true" className="grid size-9 place-items-center rounded-xl opacity-40"><Music2 size={16} strokeWidth={1.7} /></span>
+        )}
+      </div>
+
+      <div
         ref={panelRef}
         data-navbar-actions
-        className={clsx(
-          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] w-[min(calc(100vw-1rem),22rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl",
-          open && "max-md:pointer-events-none max-md:translate-y-4 max-md:opacity-0"
-        )}
+        className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] w-[min(calc(100vw-1rem),22rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl"
       >
         <div
           ref={progressTrackRef}
           aria-hidden="true"
-          className="pointer-events-none absolute inset-x-0 bottom-full mb-2 h-[22px]"
+          className="pointer-events-none absolute inset-x-4 bottom-full mb-2 h-[22px]"
         >
           <span
             ref={progressMarkerRef}
-            className="absolute left-0 top-0 h-0 w-0 border-x-[4px] border-t-[6px] border-x-transparent border-t-gray-900/35 [will-change:transform]"
+            className="absolute left-0 top-0 h-0 w-0 border-x-[4px] border-t-[6px] border-x-transparent border-t-gray-950/60 [will-change:transform]"
           />
           <div className="absolute inset-x-0 bottom-0 flex h-[14px] items-end justify-between">
             {Array.from({ length: SCROLL_TICK_COUNT }, (_, index) => {
@@ -438,7 +441,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
                   className="w-px shrink-0"
                   style={{
                     height: major ? "12px" : "7px",
-                    background: major ? "rgba(17,24,39,0.3)" : "rgba(17,24,39,0.15)",
+                    background: major ? "rgba(17,24,39,0.52)" : "rgba(17,24,39,0.28)",
                   }}
                 />
               );
