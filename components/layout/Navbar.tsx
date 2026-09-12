@@ -231,6 +231,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [announcementClock, setAnnouncementClock] = useState(0);
   const [dockRevealed, setDockRevealed] = useState(false);
   const [dockHiddenForFooter, setDockHiddenForFooter] = useState(false);
+  const [dockAtPageEdge, setDockAtPageEdge] = useState(true);
   const panelRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressMarkerRef = useRef<HTMLSpanElement>(null);
@@ -286,6 +287,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       if (!track || !marker) return;
       const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
       const progress = maximumScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maximumScroll)) : 0;
+      setDockAtPageEdge(window.scrollY <= 8 || window.scrollY >= maximumScroll - 8);
       const edge = 4;
       const markerX = edge + Math.max(0, track.clientWidth - edge * 2) * progress;
       marker.style.transform = `translate3d(${markerX}px, 0, 0) translateX(-50%)`;
@@ -350,6 +352,10 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       footerHideTimerRef.current = null;
     };
   }, [pathname]);
+
+  useEffect(() => {
+    if (dockAtPageEdge) setActivePanel(null);
+  }, [dockAtPageEdge]);
 
   async function sendFeedback(event: React.FormEvent) {
     event.preventDefault();
@@ -423,7 +429,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   }, []);
 
   const overHero = isHome && overDarkSurface;
-  const dockVisible = dockRevealed && !dockHiddenForFooter;
+  const dockVisible = activePanel !== null || (dockRevealed && !dockHiddenForFooter && !dockAtPageEdge);
 
   return (
     <>
@@ -447,8 +453,8 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
 
       <div
         aria-label="Media sosial"
-        className="fixed right-3 z-[65] flex flex-col items-center gap-3 text-gray-700 transition-[bottom] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:right-5"
-        style={{ bottom: dockVisible ? "max(5.25rem, calc(env(safe-area-inset-bottom) + 4.5rem))" : "max(1rem, env(safe-area-inset-bottom))" }}
+        className="fixed right-3 z-[65] flex flex-col items-center gap-3 text-gray-700 sm:right-5"
+        style={{ bottom: "max(1rem, env(safe-area-inset-bottom))" }}
       >
         {socialLinks.instagram ? (
           <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="transition-[color,transform] hover:scale-110 hover:text-brand-600">
