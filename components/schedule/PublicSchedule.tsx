@@ -1,22 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import type { JadwalItem } from "@/types";
+import { getActiveScheduleWeek, type ScheduleWeek } from "@/lib/schedule-week";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-function currentAlternatingWeek(): 1 | 2 {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), 0, 1);
-  const weekNumber = Math.ceil((((now.getTime() - start.getTime()) / 86400000) + start.getDay() + 1) / 7);
-  return weekNumber % 2 === 1 ? 1 : 2;
-}
-
 export default function PublicSchedule() {
-  const activeWeek = useMemo(currentAlternatingWeek, []);
-  const [selectedWeek, setSelectedWeek] = useState<1 | 2>(activeWeek);
+  const [activeWeek, setActiveWeek] = useState<ScheduleWeek>(() => getActiveScheduleWeek(0));
+  const [selectedWeek, setSelectedWeek] = useState<ScheduleWeek>(() => getActiveScheduleWeek(0));
   const [items, setItems] = useState<JadwalItem[]>([]);
+  const selectedManuallyRef = useRef(false);
 
   useEffect(() => {
     const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -25,9 +20,16 @@ export default function PublicSchedule() {
     const controller = new AbortController();
     const timer = window.setTimeout(() => controller.abort(), 5000);
     const client = createClient(url, key);
-    Promise.resolve(client.from("jadwal").select("id, subject, day, week, room, start_period, end_period").not("subject", "is", null).order("start_period")
-      .abortSignal(controller.signal))
-      .then(({ data }) => setItems((data ?? []) as JadwalItem[]))
+    const scheduleRequest = client.from("jadwal").select("id, subject, day, week, room, start_period, end_period").not("subject", "is", null).order("start_period").abortSignal(controller.signal);
+    const settingRequest = client.from("site_settings").select("schedule_week_offset").eq("id", 1).abortSignal(controller.signal).maybeSingle();
+    Promise.all([Promise.resolve(scheduleRequest), Promise.resolve(settingRequest)])
+      .then(([scheduleResult, settingResult]) => {
+        setItems((scheduleResult.data ?? []) as JadwalItem[]);
+        const offset = Number(settingResult.data?.schedule_week_offset) === 1 ? 1 : 0;
+        const nextActiveWeek = getActiveScheduleWeek(offset);
+        setActiveWeek(nextActiveWeek);
+        if (!selectedManuallyRef.current) setSelectedWeek(nextActiveWeek);
+      })
       .catch(() => undefined)
       .finally(() => window.clearTimeout(timer));
     return () => { window.clearTimeout(timer); controller.abort(); };
@@ -40,7 +42,7 @@ export default function PublicSchedule() {
     <section>
       <div className="mb-7 flex items-center gap-6 border-b border-surface-border">
         {[1, 2].map((week) => (
-          <button key={week} onClick={() => setSelectedWeek(week as 1 | 2)} className={`relative pb-3 text-sm ${selectedWeek === week ? "font-semibold text-gray-900 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-brand-500" : "text-gray-500"}`}>
+          <button key={week} onClick={() => { selectedManuallyRef.current = true; setSelectedWeek(week as ScheduleWeek); }} className={`relative pb-3 text-sm ${selectedWeek === week ? "font-semibold text-gray-900 after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-brand-500" : "text-gray-500"}`}>
             Week {week}{activeWeek === week && <span className="ml-2 text-[10px] font-medium uppercase tracking-wider text-brand-700">Aktif</span>}
           </button>
         ))}

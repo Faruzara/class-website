@@ -3,12 +3,15 @@
 import { useState, useTransition } from "react";
 import { Loader2, Plus, Trash2 } from "lucide-react";
 import type { JadwalItem } from "@/types";
+import { getActiveScheduleWeek, offsetForScheduleWeek, type ScheduleWeek } from "@/lib/schedule-week";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const SCHOOL_PERIODS = Array.from({ length: 11 }, (_, index) => index + 1);
 
-export default function ScheduleEditor({ initialItems }: { initialItems: JadwalItem[] }) {
+export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: { initialItems: JadwalItem[]; initialWeekOffset?: number }) {
   const [items, setItems] = useState(initialItems);
+  const [weekOffset, setWeekOffset] = useState(initialWeekOffset === 1 ? 1 : 0);
+  const [switchingWeek, setSwitchingWeek] = useState(false);
   const [form, setForm] = useState({ subject: "", day: "Senin", week: 1, room: "", start_period: 1, end_period: 2 });
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -39,8 +42,38 @@ export default function ScheduleEditor({ initialItems }: { initialItems: JadwalI
     });
   }
 
+  async function switchActiveWeek(week: ScheduleWeek) {
+    const offset = offsetForScheduleWeek(week);
+    if (offset === weekOffset || switchingWeek) return;
+    setSwitchingWeek(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/admin/jadwal", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ schedule_week_offset: offset }) });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error ?? "Gagal mengganti Week aktif");
+      setWeekOffset(offset);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Gagal mengganti Week aktif");
+    } finally {
+      setSwitchingWeek(false);
+    }
+  }
+
+  const activeWeek = getActiveScheduleWeek(weekOffset);
+
   return (
     <div className="space-y-6">
+      <section className="card">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold text-gray-900">Week aktif sekarang: Week {activeWeek}</p>
+            <p className="mt-1 text-xs leading-5 text-gray-500">Pilih Week untuk menyelaraskan jadwal. Setelah itu pergantian mingguan tetap otomatis.</p>
+          </div>
+          <div className="inline-flex rounded-lg border border-surface-border bg-surface-muted p-1">
+            {([1, 2] as const).map((week) => <button key={week} type="button" onClick={() => void switchActiveWeek(week)} disabled={switchingWeek || activeWeek === week} className={`min-h-10 rounded-md px-4 text-sm font-medium transition-colors ${activeWeek === week ? "bg-white text-brand-700 shadow-sm" : "text-gray-500 hover:text-gray-900"} disabled:cursor-default`}>{switchingWeek && activeWeek !== week ? <Loader2 size={15} className="mx-auto animate-spin" /> : `Week ${week}`}</button>)}
+          </div>
+        </div>
+      </section>
       <form onSubmit={submit} className="card grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-sm text-gray-600">Mata pelajaran</label>

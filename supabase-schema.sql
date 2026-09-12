@@ -156,6 +156,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   tiktok_url        TEXT,
   tiktok_image_locked BOOLEAN NOT NULL DEFAULT FALSE,
   creator_github_url TEXT,
+  schedule_week_offset SMALLINT NOT NULL DEFAULT 0 CHECK (schedule_week_offset IN (0, 1)),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

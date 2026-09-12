@@ -160,6 +160,7 @@ export interface SiteSettings {
   tiktok_image_url?: string | null;
   tiktok_image_locked?: boolean;
   creator_github_url?: string | null;
+  schedule_week_offset?: 0 | 1;
   updated_at: string;
 }
 

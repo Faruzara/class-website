@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEditorSession, logActivity } from "@/lib/auth";
-import { createJadwalItem, getJadwal } from "@/lib/db";
+import { createJadwalItem, getJadwal, updateSiteSettings } from "@/lib/db";
 import type { ApiResponse, JadwalItem } from "@/types";
 import { supabaseAdmin } from "@/lib/supabase";
 
@@ -53,4 +53,20 @@ export async function POST(req: NextRequest) {
   await createJadwalItem(item);
   await logActivity({ actor_role: session.role, actor_label: session.label, action: "schedule_changed", detail: `${item.subject} · ${item.day} · Week ${item.week}` });
   return NextResponse.json<ApiResponse>({ success: true });
+}
+
+export async function PATCH(req: NextRequest) {
+  const session = await getEditorSession("schedule");
+  if (!session) return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 });
+  const body = await req.json();
+  const offset = Number(body.schedule_week_offset);
+  if (![0, 1].includes(offset)) return NextResponse.json<ApiResponse>({ success: false, error: "Pilihan Week aktif tidak valid" }, { status: 400 });
+  try {
+    await updateSiteSettings({ schedule_week_offset: offset as 0 | 1 });
+    await logActivity({ actor_role: session.role, actor_label: session.label, action: "schedule_active_week_changed", detail: `Offset: ${offset}` });
+    return NextResponse.json<ApiResponse<{ schedule_week_offset: 0 | 1 }>>({ success: true, data: { schedule_week_offset: offset as 0 | 1 } });
+  } catch (error) {
+    const missingColumn = error && typeof error === "object" && "code" in error && error.code === "PGRST204";
+    return NextResponse.json<ApiResponse>({ success: false, error: missingColumn ? "Jalankan supabase-migration-schedule-week-switch.sql terlebih dahulu." : "Gagal mengganti Week aktif" }, { status: 500 });
+  }
 }
