@@ -40,7 +40,6 @@ export default function HomepageExperience({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const animationViewportRef = useRef<HTMLSpanElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLImageElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
@@ -138,7 +137,7 @@ export default function HomepageExperience({
     let running = false;
 
     const applyFrame = (expansion: number) => {
-      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
+      const viewportHeight = stage.offsetHeight || window.innerHeight;
       const rootTop = root.getBoundingClientRect().top;
       const aboutTop = aboutRef.current?.getBoundingClientRect().top ?? viewportHeight;
       const visual = getHeroStoryFrame(aboutTop, viewportHeight);
@@ -204,7 +203,7 @@ export default function HomepageExperience({
     };
 
     const kick = () => {
-      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
+      const viewportHeight = stage.offsetHeight || window.innerHeight;
       targetExpansion = clamp(-root.getBoundingClientRect().top / Math.max(viewportHeight * 1.2, 1));
       if (reducedMotion.matches) {
         currentExpansion = 1;
@@ -234,7 +233,7 @@ export default function HomepageExperience({
         }
         return;
       }
-      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
+      const viewportHeight = stage.offsetHeight || window.innerHeight;
       targetExpansion = clamp(-root.getBoundingClientRect().top / Math.max(viewportHeight * 1.2, 1));
       currentExpansion = targetExpansion;
       applyFrame(currentExpansion);
@@ -257,7 +256,6 @@ export default function HomepageExperience({
 
   return (
     <div ref={rootRef} className="hero-experience relative overflow-x-clip bg-white">
-      <span ref={animationViewportRef} aria-hidden="true" className="pointer-events-none absolute h-[100svh] w-px opacity-0" />
       <div
         ref={splashRef}
         className="fixed -inset-[2px] z-[999] flex min-h-[calc(100svh+4px)] items-center justify-center bg-[#121212] opacity-100 transition-opacity duration-500"
@@ -276,31 +274,37 @@ export default function HomepageExperience({
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div ref={stageRef} className="hero-story-backdrop pointer-events-none sticky top-0 h-[100dvh] overflow-hidden bg-[#121212] md:h-screen">
-          <div
-            ref={frameRef}
-            className="hero-expand-frame absolute inset-0 overflow-hidden [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
-          >
-            <Image
-              ref={mediaRef}
-              src={heroImage}
-              alt="Siswa XI Teknik Pemesinan 2 di bengkel praktik"
-              fill
-              priority
-              sizes="100vw"
-              draggable={false}
-              onLoad={handleHeroReady}
-              className="origin-center select-none [will-change:filter,transform]"
-              style={{ objectFit, objectPosition }}
-            />
-            <div ref={scrimRef} className="absolute inset-0 bg-black opacity-0" />
-            <div ref={introCopyRef} className="absolute inset-0 z-10 flex flex-col items-center justify-center px-5 text-center text-white opacity-0">
-              <h2 className="text-[clamp(2.25rem,7vw,5.5rem)] font-bold uppercase leading-none tracking-[-0.03em]">SMKN Jambu</h2>
-              <p className="mt-5 text-sm font-light leading-[1.8] tracking-[0.12em] text-white/75 sm:text-base md:text-lg">Precision. Discipline. Growth.</p>
+        <div className="sticky top-0 h-[100svh] md:h-screen">
+          <div ref={stageRef} className="hero-story-backdrop pointer-events-none relative h-full overflow-hidden bg-[#121212]">
+            <div
+              ref={frameRef}
+              className="hero-expand-frame absolute inset-0 overflow-hidden [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
+            >
+              <Image
+                ref={mediaRef}
+                src={heroImage}
+                alt="Siswa XI Teknik Pemesinan 2 di bengkel praktik"
+                fill
+                priority
+                sizes="100vw"
+                draggable={false}
+                onLoad={handleHeroReady}
+                className="origin-center select-none [will-change:filter,transform]"
+                style={{ objectFit, objectPosition }}
+              />
+              <div ref={scrimRef} className="absolute inset-0 bg-black opacity-0" />
+              <div ref={introCopyRef} className="absolute inset-0 z-10 flex flex-col items-center justify-center px-5 text-center text-white opacity-0">
+                <h2 className="text-[clamp(2.25rem,7vw,5.5rem)] font-bold uppercase leading-none tracking-[-0.03em]">SMKN Jambu</h2>
+                <p className="mt-5 text-sm font-light leading-[1.8] tracking-[0.12em] text-white/75 sm:text-base md:text-lg">Precision. Discipline. Growth.</p>
+              </div>
+              <div ref={veilRef} className="absolute inset-0 z-20 bg-white opacity-0" />
             </div>
-            <div ref={veilRef} className="absolute inset-0 z-20 bg-white opacity-0" />
+            <div className="hero-noise pointer-events-none absolute inset-0 z-30" aria-hidden="true" />
           </div>
-          <div className="hero-noise pointer-events-none absolute inset-0 z-30" aria-hidden="true" />
+          <div
+            aria-hidden="true"
+            className="absolute inset-x-0 top-full h-[calc(100dvh-100svh)] bg-[#121212] md:hidden"
+          />
         </div>
       </div>
 
