@@ -36,6 +36,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [dockRevealed, setDockRevealed] = useState(false);
   const [dockHiddenForFooter, setDockHiddenForFooter] = useState(false);
   const [dockAtPageEdge, setDockAtPageEdge] = useState(true);
+  const [dockNeededForShortPage, setDockNeededForShortPage] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressMarkerRef = useRef<HTMLSpanElement>(null);
@@ -90,7 +91,9 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       const marker = progressMarkerRef.current;
       if (!track || !marker) return;
       const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const revealAfter = Math.min(160, Math.max(120, window.innerHeight * 0.16));
       const progress = maximumScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maximumScroll)) : 0;
+      setDockNeededForShortPage(maximumScroll < revealAfter);
       setDockAtPageEdge(window.scrollY <= 8 || window.scrollY >= maximumScroll - 8);
       const edge = 4;
       const markerX = edge + Math.max(0, track.clientWidth - edge * 2) * progress;
@@ -106,9 +109,12 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
     window.addEventListener("resize", scheduleProgress, { passive: true });
     window.addEventListener("pageshow", scheduleProgress, { passive: true });
     window.visualViewport?.addEventListener("resize", scheduleProgress, { passive: true });
+    const layoutObserver = new ResizeObserver(scheduleProgress);
+    layoutObserver.observe(document.body);
 
     return () => {
       if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      layoutObserver.disconnect();
       window.removeEventListener("scroll", scheduleProgress);
       window.removeEventListener("resize", scheduleProgress);
       window.removeEventListener("pageshow", scheduleProgress);
@@ -208,7 +214,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
     return () => window.removeEventListener("creator-github-egg", reveal);
   }, []);
 
-  const dockVisible = activePanel !== null || (dockRevealed && !dockHiddenForFooter && !dockAtPageEdge);
+  const dockVisible = activePanel !== null || dockNeededForShortPage || (dockRevealed && !dockHiddenForFooter && !dockAtPageEdge);
 
   return (
     <>
