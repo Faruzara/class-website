@@ -79,7 +79,7 @@ export default function Footer() {
             </address>
           </div>
         </div>
-        <p className="border-t border-surface-border py-5 text-center text-xs text-neutral-400">© 2026 XI TP2. All moments preserved.</p>
+        <p className="border-t border-surface-border pb-24 pt-5 text-center text-xs text-neutral-400">© 2026 XI TP2. All moments preserved.</p>
       </div>
     </footer>
   );

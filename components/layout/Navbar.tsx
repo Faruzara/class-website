@@ -4,17 +4,17 @@ import { useCallback, useEffect, useRef, useState, type CSSProperties, type Poin
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { ArrowRight, Bell, CheckCircle2, Github, Instagram, Loader2, Menu, MessageSquareText, Music2, X } from "lucide-react";
+import { ArrowRight, Bell, CalendarDays, CheckCircle2, Github, House, Images, Instagram, Loader2, Menu, MessageSquareText, Music2, UsersRound, X } from "lucide-react";
 import { CREATOR_GITHUB_URL } from "@/lib/config";
 import clsx from "clsx";
 import type { ApiResponse, FeedbackType, Pengumuman } from "@/types";
 import { isAnnouncementVisible } from "@/lib/announcement-expiry";
 
 const NAV_LINKS = [
-  { href: "/", label: "Beranda" },
-  { href: "/jadwal", label: "Jadwal" },
-  { href: "/anggota", label: "Anggota" },
-  { href: "/galeri", label: "Galeri" },
+  { href: "/", label: "Beranda", icon: House },
+  { href: "/jadwal", label: "Jadwal", icon: CalendarDays },
+  { href: "/anggota", label: "Anggota", icon: UsersRound },
+  { href: "/galeri", label: "Galeri", icon: Images },
 ];
 
 const LINE_FALLOFF = (progress: number) => progress * progress * (3 - 2 * progress);
@@ -345,27 +345,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         overHero ? "text-white" : "text-gray-900"
       )}
     >
-      <nav className="relative z-50 mx-auto flex h-14 max-w-7xl items-center justify-between px-5 lg:px-8">
-        {showCreator ? <a href={creatorUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={(event) => { if (!creatorUrl) event.preventDefault(); }} className="relative z-10 text-black transition-all duration-300 animate-in fade-in zoom-in"><Github size={19} /></a> : <Link href="/" className="relative z-10 font-display text-sm font-bold tracking-wide">XI TP2</Link>}
-
-        <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-7 md:flex">
-          {NAV_LINKS.map((link) => (
-            <li key={link.href}>
-              <Link
-                href={link.href}
-                className={clsx(
-                  "relative py-2 text-sm transition-opacity after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:origin-left after:bg-brand-500 after:transition-transform",
-                  pathname === link.href
-                    ? "font-semibold after:scale-x-100"
-                    : "font-medium opacity-75 after:scale-x-0 hover:opacity-100 hover:after:scale-x-100"
-                )}
-              >
-                {link.label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-
+      <nav className="relative z-50 mx-auto flex h-14 max-w-7xl items-center justify-end px-5 lg:px-8">
         <div className="relative z-50 ml-auto flex items-center gap-1">
           <span className="mr-2 hidden text-xs font-medium tracking-wide opacity-70 lg:block">SMKN Jambu</span>
           <NavbarActions activePanel={activePanel} unread={unread} onToggle={togglePanel} />
@@ -406,6 +386,56 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         tiktokUrl={socialLinks.tiktok}
         onClose={() => setOpen(false)}
       />
+
+      <nav
+        aria-label="Dock navigasi utama"
+        className={clsx(
+          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] flex max-w-[calc(100vw-1rem)] -translate-x-1/2 items-center gap-1 rounded-2xl border border-white/90 bg-white/85 p-1.5 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.16)] backdrop-blur-lg transition-[opacity,transform] duration-300",
+          open && "max-md:pointer-events-none max-md:translate-y-4 max-md:opacity-0"
+        )}
+      >
+        {showCreator ? (
+          <a
+            href={creatorUrl || "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(event) => { if (!creatorUrl) event.preventDefault(); }}
+            aria-label="GitHub pembuat situs"
+            className="grid h-11 min-w-12 place-items-center rounded-xl text-gray-900 transition-colors hover:bg-white animate-in fade-in zoom-in"
+          >
+            <Github size={18} strokeWidth={1.8} />
+          </a>
+        ) : (
+          <Link
+            href="/"
+            aria-label="XI TP2 — Beranda"
+            className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white"
+          >
+            XI TP2
+          </Link>
+        )}
+
+        <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
+
+        {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+          const active = pathname === href;
+          return (
+            <Link
+              key={href}
+              href={href}
+              aria-label={label}
+              aria-current={active ? "page" : undefined}
+              className={clsx(
+                "relative flex h-11 min-w-11 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 text-[9px] font-medium leading-none transition-colors sm:min-w-12",
+                active ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+              )}
+            >
+              <Icon size={16} strokeWidth={active ? 2 : 1.7} aria-hidden="true" />
+              <span>{label}</span>
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 }
