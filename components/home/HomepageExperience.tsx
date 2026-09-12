@@ -40,6 +40,7 @@ export default function HomepageExperience({
 }) {
   const rootRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const animationViewportRef = useRef<HTMLSpanElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
   const mediaRef = useRef<HTMLImageElement>(null);
   const scrimRef = useRef<HTMLDivElement>(null);
@@ -137,7 +138,7 @@ export default function HomepageExperience({
     let running = false;
 
     const applyFrame = (expansion: number) => {
-      const viewportHeight = stage.offsetHeight || window.innerHeight;
+      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
       const rootTop = root.getBoundingClientRect().top;
       const aboutTop = aboutRef.current?.getBoundingClientRect().top ?? viewportHeight;
       const visual = getHeroStoryFrame(aboutTop, viewportHeight);
@@ -203,7 +204,7 @@ export default function HomepageExperience({
     };
 
     const kick = () => {
-      const viewportHeight = stage.offsetHeight || window.innerHeight;
+      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
       targetExpansion = clamp(-root.getBoundingClientRect().top / Math.max(viewportHeight * 1.2, 1));
       if (reducedMotion.matches) {
         currentExpansion = 1;
@@ -233,7 +234,7 @@ export default function HomepageExperience({
         }
         return;
       }
-      const viewportHeight = stage.offsetHeight || window.innerHeight;
+      const viewportHeight = animationViewportRef.current?.offsetHeight || stage.offsetHeight || window.innerHeight;
       targetExpansion = clamp(-root.getBoundingClientRect().top / Math.max(viewportHeight * 1.2, 1));
       currentExpansion = targetExpansion;
       applyFrame(currentExpansion);
@@ -256,6 +257,7 @@ export default function HomepageExperience({
 
   return (
     <div ref={rootRef} className="hero-experience relative overflow-x-clip bg-white">
+      <span ref={animationViewportRef} aria-hidden="true" className="pointer-events-none absolute h-[100svh] w-px opacity-0" />
       <div
         ref={splashRef}
         className="fixed -inset-[2px] z-[999] flex min-h-[calc(100svh+4px)] items-center justify-center bg-[#121212] opacity-100 transition-opacity duration-500"
@@ -274,7 +276,7 @@ export default function HomepageExperience({
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div ref={stageRef} className="hero-story-backdrop pointer-events-none sticky top-0 h-[100svh] overflow-hidden bg-[#121212] md:h-screen">
+        <div ref={stageRef} className="hero-story-backdrop pointer-events-none sticky top-0 h-[100dvh] overflow-hidden bg-[#121212] md:h-screen">
           <div
             ref={frameRef}
             className="hero-expand-frame absolute inset-0 overflow-hidden [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
