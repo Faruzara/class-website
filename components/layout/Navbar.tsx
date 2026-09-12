@@ -229,9 +229,12 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [feedbackState, setFeedbackState] = useState<"idle" | "sending" | "sent">("idle");
   const [feedbackError, setFeedbackError] = useState("");
   const [announcementClock, setAnnouncementClock] = useState(0);
+  const [dockRevealed, setDockRevealed] = useState(false);
+  const [dockHiddenForFooter, setDockHiddenForFooter] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressMarkerRef = useRef<HTMLSpanElement>(null);
+  const footerHideTimerRef = useRef<number | null>(null);
   const activeAnnouncements = announcements.filter((item) => isAnnouncementVisible(item, announcementClock));
   const newestAnnouncementDate = activeAnnouncements.reduce<string | null>((latest, item) => !latest || item.created_at > latest ? item.created_at : latest, null);
 
@@ -259,6 +262,8 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   }, [activePanel]);
 
   function togglePanel(panel: "announcements" | "feedback") {
+    setDockRevealed(true);
+    setDockHiddenForFooter(false);
     if (activePanel === panel) {
       setActivePanel(null);
     } else {
@@ -304,6 +309,47 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       window.visualViewport?.removeEventListener("resize", scheduleProgress);
     };
   }, []);
+
+  useEffect(() => {
+    let revealed = false;
+    setDockRevealed(false);
+    setDockHiddenForFooter(false);
+
+    const revealDock = () => {
+      if (revealed) return;
+      const revealAfter = Math.min(160, Math.max(120, window.innerHeight * 0.16));
+      if (window.scrollY < revealAfter) return;
+      revealed = true;
+      setDockRevealed(true);
+      window.removeEventListener("scroll", revealDock);
+    };
+
+    const footer = document.querySelector("footer");
+    const footerObserver = footer ? new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting) {
+        if (footerHideTimerRef.current !== null) window.clearTimeout(footerHideTimerRef.current);
+        footerHideTimerRef.current = window.setTimeout(() => {
+          setActivePanel(null);
+          setDockHiddenForFooter(true);
+        }, 2000);
+      } else {
+        if (footerHideTimerRef.current !== null) window.clearTimeout(footerHideTimerRef.current);
+        footerHideTimerRef.current = null;
+        setDockHiddenForFooter(false);
+      }
+    }, { threshold: 0.08 }) : null;
+
+    revealDock();
+    window.addEventListener("scroll", revealDock, { passive: true });
+    if (footer && footerObserver) footerObserver.observe(footer);
+
+    return () => {
+      window.removeEventListener("scroll", revealDock);
+      footerObserver?.disconnect();
+      if (footerHideTimerRef.current !== null) window.clearTimeout(footerHideTimerRef.current);
+      footerHideTimerRef.current = null;
+    };
+  }, [pathname]);
 
   async function sendFeedback(event: React.FormEvent) {
     event.preventDefault();
@@ -377,6 +423,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   }, []);
 
   const overHero = isHome && overDarkSurface;
+  const dockVisible = dockRevealed && !dockHiddenForFooter;
 
   return (
     <>
@@ -400,28 +447,32 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
 
       <div
         aria-label="Media sosial"
-        className="fixed right-3 top-1/2 z-[65] flex -translate-y-1/2 flex-col items-center gap-1 rounded-2xl border border-white/75 bg-white/65 p-1.5 text-gray-600 shadow-[0_8px_24px_rgba(17,24,39,0.10)] backdrop-blur-lg sm:right-5"
+        className="fixed right-3 z-[65] flex flex-col items-center gap-3 text-gray-700 transition-[bottom] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] sm:right-5"
+        style={{ bottom: dockVisible ? "max(5.25rem, calc(env(safe-area-inset-bottom) + 4.5rem))" : "max(1rem, env(safe-area-inset-bottom))" }}
       >
         {socialLinks.instagram ? (
-          <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="grid size-9 place-items-center rounded-xl transition-[background-color,color,transform] hover:scale-105 hover:bg-white hover:text-brand-600">
+          <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="transition-[color,transform] hover:scale-110 hover:text-brand-600">
             <Instagram size={16} strokeWidth={1.7} aria-hidden="true" />
           </a>
         ) : (
-          <span aria-hidden="true" className="grid size-9 place-items-center rounded-xl opacity-40"><Instagram size={16} strokeWidth={1.7} /></span>
+          <span aria-hidden="true" className="opacity-40"><Instagram size={16} strokeWidth={1.7} /></span>
         )}
         {socialLinks.tiktok ? (
-          <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="grid size-9 place-items-center rounded-xl transition-[background-color,color,transform] hover:scale-105 hover:bg-white hover:text-brand-600">
+          <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="transition-[color,transform] hover:scale-110 hover:text-brand-600">
             <Music2 size={16} strokeWidth={1.7} aria-hidden="true" />
           </a>
         ) : (
-          <span aria-hidden="true" className="grid size-9 place-items-center rounded-xl opacity-40"><Music2 size={16} strokeWidth={1.7} /></span>
+          <span aria-hidden="true" className="opacity-40"><Music2 size={16} strokeWidth={1.7} /></span>
         )}
       </div>
 
       <div
         ref={panelRef}
         data-navbar-actions
-        className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] w-[min(calc(100vw-1rem),22rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl"
+        className={clsx(
+          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] w-[min(calc(100vw-1rem),22rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl transition-[opacity,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+          dockVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-5 opacity-0"
+        )}
       >
         <div
           ref={progressTrackRef}
