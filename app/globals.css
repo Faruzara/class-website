@@ -514,6 +514,42 @@
     border-color: var(--members-detail);
   }
 
+  .class-members-marquee-track {
+    display: flex;
+    width: max-content;
+    will-change: transform;
+    animation: class-members-marquee-left 32s linear infinite;
+  }
+
+  .class-members-marquee-segment {
+    display: flex;
+    flex: none;
+    gap: clamp(18px, 3vw, 48px);
+    padding-right: clamp(18px, 3vw, 48px);
+  }
+
+  @keyframes class-members-marquee-left {
+    from {
+      transform: translate3d(0, 0, 0);
+    }
+
+    to {
+      transform: translate3d(-50%, 0, 0);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .class-members-marquee-track {
+      animation-duration: 40s;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .class-members-marquee-track {
+      animation: none;
+    }
+  }
+
   .class-members-foliage-stage {
     --class-members-foliage-width: min(64vw, 560px);
     --class-members-foliage-height: min(42.695652vw, 373.586957px);

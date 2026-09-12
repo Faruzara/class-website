@@ -188,16 +188,7 @@ export default function HomepageData({ children }: { children?: ReactNode }) {
                   linkLabel="View All Members"
                 />
                 {anggota.length > 0 ? (
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-9 sm:grid-cols-3 md:grid-cols-6">
-                    {anggota.slice(0, 6).map((member) => (
-                      <PersonItem
-                        key={member.id}
-                        name={member.nama}
-                        role={member.jabatan}
-                        imageUrl={member.foto_url}
-                      />
-                    ))}
-                  </div>
+                  <MembersMarquee members={anggota.slice(0, 10)} />
                 ) : (
                   <p className="border-t border-neutral-900/[0.08] py-8 text-sm text-gray-500">
                     Member data is not available yet.
@@ -776,20 +767,38 @@ function GalleryEmptyState() {
   );
 }
 
-function PersonItem({ name, role, imageUrl, featured = false }: { name: string; role: string | null; imageUrl: string | null; featured?: boolean }) {
+function MembersMarquee({ members }: { members: Anggota[] }) {
+  const minimumCards = 5;
+  const repeats = Math.max(1, Math.ceil(minimumCards / members.length));
+  const segment = Array.from({ length: repeats }, () => members).flat();
+
   return (
-    <article>
-      <div className="relative mb-4 aspect-[4/5] overflow-hidden rounded-md bg-surface-muted">
-        {imageUrl ? (
-          <Image src={imageUrl} alt={name} fill sizes="(max-width: 768px) 50vw, 20vw" className="object-cover object-center" />
-        ) : (
-          <div className="flex h-full items-center justify-center text-gray-400">
-            <User size={featured ? 34 : 28} strokeWidth={1.4} aria-hidden="true" />
+    <div className="class-members-marquee relative left-1/2 w-screen -translate-x-1/2 overflow-hidden py-2">
+      <div className="class-members-marquee-track">
+        {[0, 1].map((copy) => (
+          <div key={copy} className="class-members-marquee-segment" aria-hidden={copy === 1 ? "true" : undefined}>
+            {segment.map((member, index) => (
+              <article key={`${copy}-${index}-${member.id}`} className="group relative aspect-[4/3] w-[clamp(210px,68vw,310px)] shrink-0 overflow-hidden rounded-md bg-surface-muted ring-1 ring-inset ring-neutral-900/[0.08] sm:w-[clamp(280px,30vw,390px)]">
+                {member.foto_url ? (
+                  <Image
+                    src={member.foto_url}
+                    alt={copy === 0 ? member.nama : ""}
+                    fill
+                    sizes="(max-width: 640px) 68vw, 30vw"
+                    className="object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.025] motion-reduce:transition-none"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-gray-400">
+                    <User size={32} strokeWidth={1.4} aria-hidden="true" />
+                  </div>
+                )}
+                <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/65 to-transparent" />
+                <p className="absolute inset-x-4 bottom-3 line-clamp-2 text-xs font-medium text-white sm:bottom-4 sm:text-sm">{member.nama}</p>
+              </article>
+            ))}
           </div>
-        )}
+        ))}
       </div>
-      <h3 className="text-sm font-semibold leading-snug text-gray-900">{name}</h3>
-      {role && <p className="mt-1 text-xs text-gray-500">{role}</p>}
-    </article>
+    </div>
   );
 }
