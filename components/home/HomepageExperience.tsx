@@ -144,12 +144,15 @@ export default function HomepageExperience({
       const easedExpansion = smoothstep(0, 1, expansion);
 
       if (frameRef.current) {
-        const width = 42 + 58 * easedExpansion;
-        const height = 58 + 42 * easedExpansion;
-        const insetX = (100 - width) / 2;
-        const insetY = (100 - height) / 2;
+        const visualHeight = frameRef.current.offsetHeight || viewportHeight;
+        const viewportGap = Math.max(0, visualHeight - viewportHeight);
+        const insetX = 29 * (1 - easedExpansion);
+        const insetTop = viewportHeight * 0.21 * (1 - easedExpansion);
+        const gapReveal = smoothstep(0.82, 1, easedExpansion);
+        const insetBottom = viewportHeight * 0.21 * (1 - easedExpansion)
+          + viewportGap * (1 - gapReveal);
         const radius = 24 * (1 - easedExpansion);
-        frameRef.current.style.clipPath = `inset(${insetY}% ${insetX}% ${insetY}% ${insetX}% round ${radius}px)`;
+        frameRef.current.style.clipPath = `inset(${insetTop}px ${insetX}% ${insetBottom}px ${insetX}% round ${radius}px)`;
       }
 
       if (mediaRef.current) {
@@ -274,24 +277,27 @@ export default function HomepageExperience({
       </div>
 
       <div className="pointer-events-none absolute inset-0 z-0">
-        <div className="sticky top-0 h-[100svh] md:h-screen">
-          <div ref={stageRef} className="hero-story-backdrop pointer-events-none relative h-full overflow-hidden bg-[#121212]">
+        <div ref={stageRef} className="sticky top-0 h-[100svh] md:h-screen">
+          <div className="hero-story-backdrop pointer-events-none relative h-[100dvh] overflow-hidden bg-[#121212] md:h-full">
             <div
               ref={frameRef}
-              className="hero-expand-frame absolute inset-0 overflow-hidden [clip-path:inset(21%_29%_21%_29%_round_24px)] [will-change:clip-path]"
+              className="hero-expand-frame absolute inset-0 overflow-hidden [will-change:clip-path]"
+              style={{ clipPath: "inset(21svh 29% calc(21svh + 100dvh - 100svh) 29% round 24px)" }}
             >
-              <Image
-                ref={mediaRef}
-                src={heroImage}
-                alt="Siswa XI Teknik Pemesinan 2 di bengkel praktik"
-                fill
-                priority
-                sizes="100vw"
-                draggable={false}
-                onLoad={handleHeroReady}
-                className="origin-center select-none [will-change:filter,transform]"
-                style={{ objectFit, objectPosition }}
-              />
+              <div className="absolute inset-x-0 top-0 h-[100lvh] md:h-full">
+                <Image
+                  ref={mediaRef}
+                  src={heroImage}
+                  alt="Siswa XI Teknik Pemesinan 2 di bengkel praktik"
+                  fill
+                  priority
+                  sizes="100vw"
+                  draggable={false}
+                  onLoad={handleHeroReady}
+                  className="origin-center select-none [will-change:filter,transform]"
+                  style={{ objectFit, objectPosition }}
+                />
+              </div>
               <div ref={scrimRef} className="absolute inset-0 bg-black opacity-0" />
               <div ref={introCopyRef} className="absolute inset-0 z-10 flex flex-col items-center justify-center px-5 text-center text-white opacity-0">
                 <h2 className="text-[clamp(2.25rem,7vw,5.5rem)] font-bold uppercase leading-none tracking-[-0.03em]">SMKN Jambu</h2>
@@ -301,10 +307,6 @@ export default function HomepageExperience({
             </div>
             <div className="hero-noise pointer-events-none absolute inset-0 z-30" aria-hidden="true" />
           </div>
-          <div
-            aria-hidden="true"
-            className="absolute inset-x-0 top-full h-[calc(100dvh-100svh)] bg-[#121212] md:hidden"
-          />
         </div>
       </div>
 
