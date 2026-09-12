@@ -1,5 +1,15 @@
 # Moments — capture dan publish
 
+Dokumen ini menjelaskan fitur Moments yang saat ini terintegrasi pada portal Web Kelas XI TP2. Untuk setup umum project, environment variables, route, Cloudinary, dan deploy Vercel, lihat [README.md](README.md).
+
+## Status saat ini
+
+- Moments memakai kamera browser dan hanya dapat digunakan pada secure context: HTTPS atau `localhost`.
+- Media Moments disimpan di bucket Supabase private, terpisah dari media publik seperti anggota, galeri, dan homepage.
+- Masa aktif Moment adalah 24 jam berdasarkan waktu database.
+- Pengelolaan dan penghapusan Moment dibatasi untuk Owner; jalur upload mengikuti session dan role yang sudah ada.
+- Fitur Vercel Analytics dan Speed Insights berada di root layout aplikasi, tetapi tidak mengubah alur Moments.
+
 ## Aktifkan di Supabase
 
 Jalankan **seluruh isi `supabase-migration-moments.sql`**, lalu **`supabase-migration-moments-captured-at.sql`**, sebagai query baru di SQL Editor project yang sama. Jika migration dasar sudah pernah dijalankan, cukup jalankan migration `captured-at` yang baru. Tidak perlu menghapus/menggabungkan query lama. Migration belum dijalankan otomatis.
@@ -34,7 +44,7 @@ Delete menandai `deleting` terlebih dahulu, sehingga langsung hilang dari query 
 
 Expired tidak tampil sebagai aktif, tetapi file/record boleh tetap ada untuk maintenance nanti. Tidak ada cron baru.
 
-## File baru
+## File dan migration terkait
 
 - `supabase-migration-moments.sql`: tabel, masa aktif dan private storage.
 - `supabase-migration-moments-captured-at.sql`: timestamp shutter, tanpa mengubah lifetime atau mengarang waktu foto lama.
@@ -70,8 +80,9 @@ Tidak ada dependency/config/auth/key/middleware/editor lain yang diubah.
 
 ## Validasi dan batas pengujian
 
-- TypeScript dan production build divalidasi.
-- Tes existing carousel (24), homepage Gallery (19), gallery focus (8), Moments preview (11), dan capture/API (26): **88 tes**.
+- TypeScript dan production build perlu dijalankan dari root project setelah perubahan:
+  `npx tsc --noEmit` dan `npm run build`.
+- Regression test offline terkait Moments tersedia melalui `scripts/test-moments-capture.cjs`, `scripts/test-moments-preview.cjs`, dan `scripts/test-moments-viewer.cjs`. Hasil test mengikuti kondisi source dan dependency saat dijalankan; angka historis tidak dijadikan jaminan tetap.
 - Tes offline mencakup Owner/Admin/Temp Admin, delete permission, duplicate shutter, upload success/failure, partial cleanup, expiry filter, private DTO, denied/missing/busy camera, switch/late stream cleanup, original aspect ratio dan empty/non-JSON response.
 - Browser menggunakan fixture UI lokal dengan permission kamera **disimulasikan ditolak**, bukan mengaktifkan kamera fisik. Composer diperiksa pada 320×568, 375×667, 414×896, 768×1024 dan 1360×900: tanpa horizontal overflow, shutter terlihat, close mengembalikan fokus dan scroll halaman.
 - Belum dilakukan: capture dengan hardware nyata, integrasi upload/delete ke Supabase setelah migration, dan verifikasi RLS/RPC pada database live. Tes SQL saat ini memeriksa migration dan perilaku backend dengan database mock, bukan menjalankan PostgreSQL live.
