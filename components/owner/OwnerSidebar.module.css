@@ -55,6 +55,14 @@
 .profileImage {
   width: 48px;
   height: 48px;
+  overflow: hidden;
+}
+
+.profileImage img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .mobileAvatar {

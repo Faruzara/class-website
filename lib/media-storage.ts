@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase";
 
 const SUPABASE_BUCKET = "web-kelas";
 const SUPABASE_PUBLIC_MARKER = `/storage/v1/object/public/${SUPABASE_BUCKET}/`;
+const CLOUDINARY_ENV_FOLDER = process.env.CLOUDINARY_ENV_FOLDER?.trim() || "prod";
 const CLOUDINARY_ROOT = "web-kelas";
 
 type PublicImageUpload = {
@@ -47,7 +48,7 @@ function cloudinaryPublicId(value: string): string | null {
 
 async function uploadCloudinaryImage(input: PublicImageUpload): Promise<string> {
   const { cloudName, apiKey, apiSecret } = cloudinaryConfig();
-  const publicId = `${CLOUDINARY_ROOT}/${input.folder}/${input.fileName.replace(/\.[^.]+$/, "")}`;
+  const publicId = `${CLOUDINARY_ROOT}/${CLOUDINARY_ENV_FOLDER}/${input.folder}/${input.fileName.replace(/\.[^.]+$/, "")}`;
   const form = new FormData();
   const uploadBytes = new Uint8Array(input.bytes.byteLength);
   uploadBytes.set(input.bytes);
