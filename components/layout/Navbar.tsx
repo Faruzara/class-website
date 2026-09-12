@@ -220,6 +220,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [creatorUrl, setCreatorUrl] = useState(CREATOR_GITHUB_URL);
   const [socialLinks, setSocialLinks] = useState({ instagram: "", tiktok: "" });
   const [activePanel, setActivePanel] = useState<"announcements" | "feedback" | null>(null);
+  const [renderedPanel, setRenderedPanel] = useState<"announcements" | "feedback">("feedback");
   const [unread, setUnread] = useState(false);
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -227,6 +228,8 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [feedbackError, setFeedbackError] = useState("");
   const [announcementClock, setAnnouncementClock] = useState(0);
   const panelRef = useRef<HTMLDivElement>(null);
+  const progressTrackRef = useRef<HTMLDivElement>(null);
+  const progressMarkerRef = useRef<HTMLSpanElement>(null);
   const activeAnnouncements = announcements.filter((item) => isAnnouncementVisible(item, announcementClock));
   const newestAnnouncementDate = activeAnnouncements.reduce<string | null>((latest, item) => !latest || item.created_at > latest ? item.created_at : latest, null);
 
@@ -255,12 +258,51 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
 
   function togglePanel(panel: "announcements" | "feedback") {
     setOpen(false);
-    setActivePanel((current) => current === panel ? null : panel);
+    if (activePanel === panel) {
+      setActivePanel(null);
+    } else {
+      setRenderedPanel(panel);
+      setActivePanel(panel);
+    }
     if (panel === "announcements" && newestAnnouncementDate) {
       window.localStorage.setItem("navbar-announcements-seen", newestAnnouncementDate);
       setUnread(false);
     }
   }
+
+  useEffect(() => {
+    let animationFrame = 0;
+
+    const updateProgress = () => {
+      animationFrame = 0;
+      const track = progressTrackRef.current;
+      const marker = progressMarkerRef.current;
+      if (!track || !marker) return;
+      const maximumScroll = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+      const progress = maximumScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maximumScroll)) : 0;
+      const edge = 14;
+      const markerX = edge + Math.max(0, track.clientWidth - edge * 2) * progress;
+      marker.style.transform = `translate3d(${markerX}px, 0, 0) translateX(-50%)`;
+    };
+
+    const scheduleProgress = () => {
+      if (!animationFrame) animationFrame = window.requestAnimationFrame(updateProgress);
+    };
+
+    updateProgress();
+    window.addEventListener("scroll", scheduleProgress, { passive: true });
+    window.addEventListener("resize", scheduleProgress, { passive: true });
+    window.addEventListener("pageshow", scheduleProgress, { passive: true });
+    window.visualViewport?.addEventListener("resize", scheduleProgress, { passive: true });
+
+    return () => {
+      if (animationFrame) window.cancelAnimationFrame(animationFrame);
+      window.removeEventListener("scroll", scheduleProgress);
+      window.removeEventListener("resize", scheduleProgress);
+      window.removeEventListener("pageshow", scheduleProgress);
+      window.visualViewport?.removeEventListener("resize", scheduleProgress);
+    };
+  }, []);
 
   async function sendFeedback(event: React.FormEvent) {
     event.preventDefault();
@@ -376,6 +418,27 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         )}
       >
         <div
+          ref={progressTrackRef}
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-x-0 bottom-full mb-2 h-12 overflow-hidden rounded-xl bg-[#121212] shadow-[0_8px_24px_rgba(17,24,39,0.16)]"
+        >
+          <span
+            ref={progressMarkerRef}
+            className="absolute left-0 top-2 h-0 w-0 border-x-[4px] border-t-[7px] border-x-transparent border-t-white/35 [will-change:transform]"
+          />
+          <div className="absolute inset-x-3 bottom-2.5 h-3">
+            <span
+              className="absolute inset-x-0 bottom-0 h-2 opacity-50"
+              style={{ backgroundImage: "repeating-linear-gradient(to right, rgba(255,255,255,0.42) 0 1px, transparent 1px 8px)" }}
+            />
+            <span
+              className="absolute inset-0 opacity-55"
+              style={{ backgroundImage: "repeating-linear-gradient(to right, rgba(255,255,255,0.55) 0 1px, transparent 1px 75px)" }}
+            />
+          </div>
+        </div>
+
+        <div
           aria-hidden={activePanel === null}
           inert={activePanel === null}
           className={clsx(
@@ -384,7 +447,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            {activePanel === "feedback" ? (
+            {renderedPanel === "feedback" ? (
               <section aria-label="Kirim feedback" className="pb-2 text-gray-900">
                 {feedbackState === "sent" ? (
                   <div className="px-3 py-6 text-center">
@@ -411,8 +474,9 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
                   </form>
                 )}
               </section>
-            ) : activePanel === "announcements" ? (
-              <section aria-label="Pengumuman terbaru" className="pb-2 text-gray-900">
+            ) : (
+              <section aria-label="Pengumuman terbaru" className="relative pb-2 text-gray-900">
+                <button type="button" onClick={() => setActivePanel(null)} className="absolute right-1.5 top-1.5 z-10 grid size-7 place-items-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-900" aria-label="Tutup pengumuman"><X size={14} /></button>
                 <div className="max-h-[min(46svh,19rem)] divide-y divide-gray-900/[0.07] overflow-y-auto rounded-xl border border-white/75 bg-white/45">
                   {activeAnnouncements.length ? activeAnnouncements.slice(0, 6).map((item) => (
                     <article key={item.id} className="px-3 py-3">
@@ -427,11 +491,10 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
                 </div>
                 <div className="flex items-center gap-2 px-1 pt-2">
                   <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-brand-700">Pengumuman</span>
-                  <Link href="/pengumuman" onClick={() => setActivePanel(null)} className="ml-auto inline-flex h-9 items-center gap-1 rounded-xl bg-white px-3 text-[10px] font-semibold text-gray-700 shadow-sm transition-transform hover:scale-[1.03]">Semua <ArrowRight size={12} aria-hidden="true" /></Link>
-                  <button type="button" onClick={() => setActivePanel(null)} className="grid size-9 place-items-center rounded-xl bg-white text-gray-500 shadow-sm transition-transform hover:scale-105 hover:text-gray-900" aria-label="Tutup pengumuman"><X size={14} /></button>
+                  <Link href="/pengumuman" onClick={() => setActivePanel(null)} className="ml-auto inline-flex h-9 items-center gap-1 px-2 text-[10px] font-semibold text-gray-600 transition-colors hover:text-gray-900">Semua <ArrowRight size={12} aria-hidden="true" /></Link>
                 </div>
               </section>
-            ) : null}
+            )}
           </div>
         </div>
 
