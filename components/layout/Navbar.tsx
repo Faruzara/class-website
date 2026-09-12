@@ -356,16 +356,6 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
         </div>
       </nav>
 
-      <div ref={panelRef} className="absolute right-4 top-14 z-[60] w-[calc(100%-2rem)] max-w-sm text-gray-900 sm:right-6 lg:right-8">
-        {activePanel === "announcements" ? <section aria-label="Pengumuman terbaru" className="overflow-hidden rounded-lg border border-white/80 bg-white/85 shadow-[0_18px_45px_rgba(31,41,55,0.14)] backdrop-blur-md">
-          <div className="flex items-center justify-between px-5 pb-2 pt-4"><div><p className="font-mono text-[10px] text-brand-700">UPDATES</p><h2 className="mt-1 text-sm font-semibold">Pengumuman</h2></div><div className="flex items-center gap-1"><Link href="/pengumuman" onClick={() => setActivePanel(null)} className="inline-flex min-h-9 items-center gap-1 rounded-md px-2 text-[11px] font-semibold text-brand-700 transition-colors hover:bg-white/70" aria-label="Lihat semua pengumuman">Semua <ArrowRight size={12} aria-hidden="true" /></Link><button type="button" onClick={() => setActivePanel(null)} className="grid size-9 place-items-center rounded-md text-gray-500 transition-colors hover:bg-white/70 hover:text-gray-900" aria-label="Tutup pengumuman"><X size={16} /></button></div></div>
-          <div className="max-h-[min(60vh,28rem)] divide-y divide-surface-border overflow-y-auto">
-            {activeAnnouncements.length ? activeAnnouncements.slice(0, 6).map((item) => <article key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-3"><h3 className="text-sm font-semibold leading-5">{item.judul}</h3><span className={`shrink-0 font-mono text-[9px] uppercase ${item.announcement_type === "system" ? "text-brand-700" : "text-gray-400"}`}>{item.announcement_type === "system" ? "System" : "Admin"}</span></div><p className="mt-1.5 line-clamp-3 text-xs leading-5 text-gray-600">{item.konten}</p><time className="mt-2 block text-[10px] text-gray-400">{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</time></article>) : <p className="px-5 py-10 text-center text-sm text-gray-500">Belum ada pengumuman.</p>}
-          </div>
-        </section> : null}
-
-      </div>
-
       <MobileLineMenu
         open={open}
         pathname={pathname}
@@ -378,55 +368,74 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
       </header>
 
       <div
+        ref={panelRef}
         data-navbar-actions
         className={clsx(
-          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] max-w-[calc(100vw-1rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl",
+          "fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-[70] w-[min(calc(100vw-1rem),22rem)] -translate-x-1/2 overflow-visible rounded-2xl border border-white/75 bg-white/70 p-2 text-gray-700 shadow-[0_14px_40px_rgba(17,24,39,0.14)] backdrop-blur-xl",
           open && "max-md:pointer-events-none max-md:translate-y-4 max-md:opacity-0"
         )}
       >
         <div
-          aria-hidden={activePanel !== "feedback"}
-          inert={activePanel !== "feedback"}
+          aria-hidden={activePanel === null}
+          inert={activePanel === null}
           className={clsx(
-            "grid min-w-0 overflow-hidden transition-[width,grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-            activePanel === "feedback"
-              ? "w-[min(calc(100vw-2rem),28rem)] grid-rows-[1fr] opacity-100"
-              : "pointer-events-none w-0 grid-rows-[0fr] opacity-0"
+            "grid w-full overflow-hidden transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+            activePanel ? "grid-rows-[1fr] opacity-100" : "pointer-events-none grid-rows-[0fr] opacity-0"
           )}
         >
           <div className="min-h-0 overflow-hidden">
-              <section aria-label="Kirim feedback" className="w-[min(calc(100vw-2rem),28rem)] pb-2 text-gray-900">
-                <div className="flex items-center justify-between px-2 pb-2 pt-1">
-                  <div>
-                    <p className="font-mono text-[9px] uppercase tracking-[0.16em] text-brand-700">Feedback</p>
-                    <h2 className="mt-1 text-sm font-semibold">Bantu kami memperbaiki situs</h2>
-                  </div>
-                  <button type="button" onClick={() => setActivePanel(null)} className="grid size-8 place-items-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-900" aria-label="Tutup feedback"><X size={15} /></button>
-                </div>
-
+            {activePanel === "feedback" ? (
+              <section aria-label="Kirim feedback" className="pb-2 text-gray-900">
                 {feedbackState === "sent" ? (
-                  <div className="px-3 py-7 text-center">
+                  <div className="px-3 py-6 text-center">
                     <CheckCircle2 size={24} className="mx-auto text-emerald-600" />
                     <p className="mt-2 text-sm font-semibold">Feedback sudah terkirim.</p>
                     <button type="button" onClick={() => setFeedbackState("idle")} className="mt-3 text-xs font-semibold text-brand-700">Kirim feedback lain</button>
                   </div>
                 ) : (
-                  <form onSubmit={sendFeedback} className="space-y-3 px-2">
-                    <div className="relative inline-grid grid-cols-2 rounded-lg bg-gray-900/[0.05] p-1" aria-label="Jenis feedback">
-                      <span aria-hidden="true" className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-md bg-white shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none ${feedbackType === "feature" ? "translate-x-full" : "translate-x-0"}`} />
-                      {([["bug", "Bug"], ["feature", "Request fitur"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setFeedbackType(value)} aria-pressed={feedbackType === value} className={`relative z-10 min-h-8 min-w-[6rem] px-3 text-[11px] font-semibold transition-colors ${feedbackType === value ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}>{label}</button>)}
+                  <form onSubmit={sendFeedback} className="space-y-2">
+                    <div className="relative">
+                      <button type="button" onClick={() => setActivePanel(null)} className="absolute right-1.5 top-1.5 z-10 grid size-7 place-items-center rounded-lg text-gray-400 transition-colors hover:bg-white hover:text-gray-900" aria-label="Tutup feedback"><X size={14} /></button>
+                      <textarea id="navbar-feedback" aria-label="Pesan feedback" required minLength={10} maxLength={1000} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} className="h-24 w-full resize-none rounded-xl border border-white/80 bg-white/55 px-3 py-2.5 pr-10 text-sm leading-6 outline-none transition-colors placeholder:text-gray-400 focus:border-brand-400" placeholder="Ceritakan secara singkat..." />
                     </div>
-                    <textarea id="navbar-feedback" aria-label="Pesan feedback" required minLength={10} maxLength={1000} value={feedbackMessage} onChange={(event) => setFeedbackMessage(event.target.value)} className="h-24 w-full resize-none rounded-xl border border-white/80 bg-white/60 px-3 py-2.5 text-sm leading-6 outline-none transition-colors placeholder:text-gray-400 focus:border-brand-400" placeholder="Ceritakan secara singkat..." />
                     <input name="website" className="hidden" tabIndex={-1} autoComplete="off" />
-                    {feedbackError ? <p role="alert" className="text-xs text-rose-700">{feedbackError}</p> : null}
-                    <div className="flex justify-end"><button disabled={feedbackState === "sending" || feedbackMessage.trim().length < 10} className="inline-flex size-10 items-center justify-center rounded-xl bg-white text-gray-800 shadow-sm transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Kirim feedback">{feedbackState === "sending" ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}</button></div>
+                    {feedbackError ? <p role="alert" className="px-1 text-xs text-rose-700">{feedbackError}</p> : null}
+                    <div className="flex items-center gap-2 px-1">
+                      <span className="shrink-0 font-mono text-[9px] uppercase tracking-[0.12em] text-brand-700">Feedback</span>
+                      <div className="relative inline-grid min-w-0 grid-cols-2 rounded-lg bg-gray-900/[0.05] p-1" aria-label="Jenis feedback">
+                        <span aria-hidden="true" className={`absolute bottom-1 left-1 top-1 w-[calc(50%-0.25rem)] rounded-md bg-white shadow-sm transition-transform duration-300 ease-out motion-reduce:transition-none ${feedbackType === "feature" ? "translate-x-full" : "translate-x-0"}`} />
+                        {([["bug", "Bug"], ["feature", "Request"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setFeedbackType(value)} aria-pressed={feedbackType === value} className={`relative z-10 min-h-8 px-2 text-[10px] font-semibold transition-colors ${feedbackType === value ? "text-gray-900" : "text-gray-500 hover:text-gray-900"}`}>{label}</button>)}
+                      </div>
+                      <button disabled={feedbackState === "sending" || feedbackMessage.trim().length < 10} className="ml-auto inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-white text-gray-800 shadow-sm transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-40" aria-label="Kirim feedback">{feedbackState === "sending" ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}</button>
+                    </div>
                   </form>
                 )}
               </section>
+            ) : activePanel === "announcements" ? (
+              <section aria-label="Pengumuman terbaru" className="pb-2 text-gray-900">
+                <div className="max-h-[min(46svh,19rem)] divide-y divide-gray-900/[0.07] overflow-y-auto rounded-xl border border-white/75 bg-white/45">
+                  {activeAnnouncements.length ? activeAnnouncements.slice(0, 6).map((item) => (
+                    <article key={item.id} className="px-3 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <h3 className="text-xs font-semibold leading-5">{item.judul}</h3>
+                        <span className={`shrink-0 font-mono text-[8px] uppercase ${item.announcement_type === "system" ? "text-brand-700" : "text-gray-400"}`}>{item.announcement_type === "system" ? "System" : "Admin"}</span>
+                      </div>
+                      <p className="mt-1 line-clamp-3 text-[11px] leading-4 text-gray-600">{item.konten}</p>
+                      <time className="mt-1.5 block text-[9px] text-gray-400">{new Date(item.created_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}</time>
+                    </article>
+                  )) : <p className="px-4 py-8 text-center text-xs text-gray-500">Belum ada pengumuman.</p>}
+                </div>
+                <div className="flex items-center gap-2 px-1 pt-2">
+                  <span className="font-mono text-[9px] uppercase tracking-[0.12em] text-brand-700">Pengumuman</span>
+                  <Link href="/pengumuman" onClick={() => setActivePanel(null)} className="ml-auto inline-flex h-9 items-center gap-1 rounded-xl bg-white px-3 text-[10px] font-semibold text-gray-700 shadow-sm transition-transform hover:scale-[1.03]">Semua <ArrowRight size={12} aria-hidden="true" /></Link>
+                  <button type="button" onClick={() => setActivePanel(null)} className="grid size-9 place-items-center rounded-xl bg-white text-gray-500 shadow-sm transition-transform hover:scale-105 hover:text-gray-900" aria-label="Tutup pengumuman"><X size={14} /></button>
+                </div>
+              </section>
+            ) : null}
           </div>
         </div>
 
-        <nav aria-label="Dock navigasi utama" className="flex items-center justify-center gap-1">
+        <nav aria-label="Dock navigasi utama" className="flex items-center justify-center gap-0.5">
           {showCreator ? (
             <a
               href={creatorUrl || "#"}
@@ -453,7 +462,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
                 aria-label={label}
                 aria-current={active ? "page" : undefined}
                 className={clsx(
-                  "group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]",
+                  "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
                   active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
                 )}
               >
@@ -463,13 +472,13 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
             );
           })}
 
-          <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+          <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
             <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Pengumuman</span>
             <Bell size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             {unread ? <span className="absolute right-2 top-2 size-1.5 rounded-full bg-brand-500 ring-2 ring-white" aria-label="Ada pengumuman baru" /> : null}
           </button>
 
-          <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-10 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow]", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+          <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
             <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
             <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
           </button>
