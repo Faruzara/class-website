@@ -4,14 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { createClient } from "@supabase/supabase-js";
-import { ArrowRight, Bell, CalendarDays, CheckCircle2, Github, House, Images, Instagram, Loader2, MessageSquareText, Music2, UsersRound, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Bell, CalendarDays, CheckCircle2, Ellipsis, Github, Images, Instagram, Loader2, MessageSquareText, Music2, UsersRound, X } from "lucide-react";
 import { CREATOR_GITHUB_URL } from "@/lib/config";
 import clsx from "clsx";
 import type { ApiResponse, FeedbackType, Pengumuman } from "@/types";
 import { isAnnouncementVisible } from "@/lib/announcement-expiry";
+import SoundCloudDockPlayer from "./SoundCloudDockPlayer";
+import type { MusicTrack } from "@/types";
 
 const NAV_LINKS = [
-  { href: "/", label: "Beranda", icon: House },
   { href: "/jadwal", label: "Jadwal", icon: CalendarDays },
   { href: "/anggota", label: "Anggota", icon: UsersRound },
   { href: "/galeri", label: "Galeri", icon: Images },
@@ -20,7 +21,7 @@ const NAV_LINKS = [
 const SCROLL_TICK_COUNT = 56;
 const SCROLL_MAJOR_EVERY = 5;
 
-export default function Navbar({ announcements = [] }: { announcements?: Pengumuman[] }) {
+export default function Navbar({ announcements = [], musicTracks = [] }: { announcements?: Pengumuman[]; musicTracks?: MusicTrack[] }) {
   const pathname = usePathname();
   const [showCreator, setShowCreator] = useState(false);
   const [creatorUrl, setCreatorUrl] = useState(CREATOR_GITHUB_URL);
@@ -37,6 +38,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
   const [dockHiddenForFooter, setDockHiddenForFooter] = useState(false);
   const [dockAtPageEdge, setDockAtPageEdge] = useState(true);
   const [dockNeededForShortPage, setDockNeededForShortPage] = useState(false);
+  const [dockPage, setDockPage] = useState<1 | 2>(1);
   const panelRef = useRef<HTMLDivElement>(null);
   const progressTrackRef = useRef<HTMLDivElement>(null);
   const progressMarkerRef = useRef<HTMLSpanElement>(null);
@@ -124,6 +126,7 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
 
   useEffect(() => {
     let revealed = false;
+    setDockPage(1);
     setDockRevealed(false);
     setDockHiddenForFooter(false);
 
@@ -333,52 +336,83 @@ export default function Navbar({ announcements = [] }: { announcements?: Pengumu
           </div>
         </div>
 
-        <nav aria-label="Dock navigasi utama" className="flex items-center justify-center gap-0.5">
-          {showCreator ? (
-            <a
-              href={creatorUrl || "#"}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(event) => { if (!creatorUrl) event.preventDefault(); }}
-              aria-label="GitHub pembuat situs"
-              className="group relative grid h-11 min-w-12 place-items-center rounded-xl bg-white text-gray-900 shadow-sm animate-in fade-in zoom-in"
-            >
-              <Github size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
-            </a>
-          ) : (
-            <Link href="/" aria-label="XI TP2 — Beranda" className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white">XI TP2</Link>
-          )}
-
-          <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
-
-          {NAV_LINKS.map(({ href, label, icon: Icon }) => {
-            const active = pathname === href;
-            return (
-              <Link
-                key={href}
-                href={href}
-                aria-label={label}
-                aria-current={active ? "page" : undefined}
-                className={clsx(
-                  "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
-                  active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
-                )}
+        <nav aria-label="Dock navigasi utama" className="flex items-center gap-0.5">
+          <div
+            aria-hidden={dockPage !== 1}
+            inert={dockPage !== 1}
+            className={clsx(
+              "flex min-w-0 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              dockPage === 1 ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0"
+            )}
+          >
+            {showCreator ? (
+              <a
+                href={creatorUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(event) => { if (!creatorUrl) event.preventDefault(); }}
+                aria-label="GitHub pembuat situs"
+                className="group relative grid h-11 min-w-12 place-items-center rounded-xl bg-white text-gray-900 shadow-sm animate-in fade-in zoom-in"
               >
-                <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{label}</span>
-                <Icon size={18} strokeWidth={active ? 2 : 1.7} className={clsx("transition-transform group-hover:scale-110 group-active:scale-110", active && "scale-110")} aria-hidden="true" />
-              </Link>
-            );
-          })}
+                <Github size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              </a>
+            ) : (
+              <Link href="/" aria-label="XI TP2 — Beranda" className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white">XI TP2</Link>
+            )}
 
-          <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
-            <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Pengumuman</span>
-            <Bell size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
-            {unread ? <span className="absolute right-2 top-2 size-1.5 rounded-full bg-brand-500 ring-2 ring-white" aria-label="Ada pengumuman baru" /> : null}
-          </button>
+            <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
 
-          <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
-            <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
-            <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            {NAV_LINKS.map(({ href, label, icon: Icon }) => {
+              const active = pathname === href;
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  aria-label={label}
+                  aria-current={active ? "page" : undefined}
+                  className={clsx(
+                    "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
+                    active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+                  )}
+                >
+                  <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{label}</span>
+                  <Icon size={18} strokeWidth={active ? 2 : 1.7} className={clsx("transition-transform group-hover:scale-110 group-active:scale-110", active && "scale-110")} aria-hidden="true" />
+                </Link>
+              );
+            })}
+
+            <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Pengumuman</span>
+              <Bell size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              {unread ? <span className="absolute right-2 top-2 size-1.5 rounded-full bg-brand-500 ring-2 ring-white" aria-label="Ada pengumuman baru" /> : null}
+            </button>
+
+            <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
+              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
+              <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            </button>
+          </div>
+
+          <div
+            aria-hidden={dockPage !== 2}
+            inert={dockPage !== 2}
+            className={clsx(
+              "min-w-0 flex-1 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
+            )}
+          >
+            <SoundCloudDockPlayer tracks={musicTracks} />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => { setActivePanel(null); setDockPage((page) => page === 1 ? 2 : 1); }}
+            aria-label={dockPage === 1 ? "Buka menu 2" : "Kembali ke menu utama"}
+            aria-pressed={dockPage === 2}
+            className="group relative ml-auto grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-colors hover:bg-white hover:text-gray-900 min-[360px]:size-10"
+          >
+            <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{dockPage === 1 ? "Menu 2" : "Kembali"}</span>
+            {dockPage === 1 ? <Ellipsis size={19} strokeWidth={1.8} /> : <ArrowLeft size={18} strokeWidth={1.8} />}
           </button>
         </nav>
       </div>

@@ -164,6 +164,20 @@ CREATE TABLE IF NOT EXISTS site_settings (
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS music_settings (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1), soundcloud_client_id TEXT,
+  soundcloud_client_id_status TEXT NOT NULL DEFAULT 'unchecked' CHECK (soundcloud_client_id_status IN ('unchecked', 'valid', 'expired', 'error')),
+  soundcloud_client_id_checked_at TIMESTAMPTZ, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+INSERT INTO music_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS music_tracks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(), soundcloud_url TEXT NOT NULL UNIQUE,
+  title TEXT NOT NULL, artist TEXT NOT NULL, artwork_url TEXT, duration_ms INTEGER,
+  position INTEGER NOT NULL DEFAULT 0, is_active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 INSERT INTO site_settings (id) VALUES (1)
 ON CONFLICT (id) DO NOTHING;
 
@@ -180,6 +194,8 @@ ALTER TABLE temp_keys     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE activity_logs ENABLE ROW LEVEL SECURITY;
 ALTER TABLE access_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE music_tracks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE music_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE feedback_submissions ENABLE ROW LEVEL SECURITY;
 
 -- Publik: hanya SELECT di tabel konten
@@ -188,5 +204,6 @@ CREATE POLICY "publik baca jadwal"        ON jadwal        FOR SELECT USING (TRU
 CREATE POLICY "publik baca anggota"       ON anggota       FOR SELECT USING (is_visible = TRUE);
 CREATE POLICY "publik baca galeri"        ON galeri        FOR SELECT USING (TRUE);
 CREATE POLICY "publik baca site settings" ON site_settings FOR SELECT USING (TRUE);
+CREATE POLICY "publik baca musik aktif" ON music_tracks FOR SELECT USING (is_active = TRUE);
 
 -- Semua operasi write hanya lewat service_role (tidak ada policy publik untuk write)

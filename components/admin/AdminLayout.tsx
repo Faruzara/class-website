@@ -17,6 +17,7 @@ type NavItem = {
   label: string;
   permission?: TempPermission;
   adminOnly?: boolean;
+  permanentOnly?: boolean;
 };
 
 type IrisAnchor = {
@@ -39,6 +40,7 @@ const CONTENT_ITEMS: NavItem[] = [
   { href: "/admin/galeri", label: "Gallery", permission: "gallery" },
   { href: "/admin/moments", label: "Moments", permission: "moments" },
   { href: "/admin/pengumuman", label: "Announcements", permission: "homepage" },
+  { href: "/admin/music", label: "Music", permanentOnly: true },
 ];
 const ACCESS_ITEMS: NavItem[] = [
   { href: "/admin/temp-key", label: "Temporary Access", adminOnly: true },
@@ -47,6 +49,7 @@ const SETTINGS_ITEM: NavItem = { href: "/admin/settings", label: "Settings", per
 
 function canSeeNavItem(item: NavItem, role?: Role, permissions?: TempPermission[]) {
   if (item.adminOnly && role !== "admin") return false;
+  if (item.permanentOnly && role === "temp_admin") return false;
   if (role !== "temp_admin" || !item.permission) return true;
   return Boolean(permissions?.includes(item.permission));
 }

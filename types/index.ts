@@ -175,6 +175,35 @@ export interface SiteSettings {
   updated_at: string;
 }
 
+export interface MusicSettings {
+  id: number;
+  soundcloud_client_id: string | null;
+  soundcloud_client_id_status: "unchecked" | "valid" | "expired" | "error";
+  soundcloud_client_id_checked_at: string | null;
+  updated_at: string;
+}
+
+export interface MusicTrack {
+  id: string;
+  soundcloud_url: string;
+  title: string;
+  artist: string;
+  artwork_url: string | null;
+  duration_ms: number | null;
+  position: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SoundCloudTrackResult {
+  soundcloud_url: string;
+  title: string;
+  artist: string;
+  artwork_url: string | null;
+  duration_ms: number | null;
+}
+
 // -- Response API standar --
 export interface ApiResponse<T = null> {
   success: boolean;

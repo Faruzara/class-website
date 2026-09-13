@@ -17,6 +17,7 @@ const NAV_GROUPS: readonly OwnerNavGroup[] = [
     { label: "Schedule", target: "owner-content-schedule", href: "/owner/content/schedule" },
     { label: "Members", target: "owner-content-members", href: "/owner/content/members" },
     { label: "Gallery", target: "owner-content-gallery", href: "/owner/content/gallery" },
+    { label: "Music", target: "owner-music", href: "/owner/music" },
   ] },
   { title: "Access", items: [
     { label: "Admin Slots", target: "owner-slots", href: "/owner/access/admin-slots" },

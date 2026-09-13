@@ -2,7 +2,7 @@ import "server-only";
 import { supabase, supabaseAdmin } from "./supabase";
 import type {
   Pengumuman, JadwalItem, Anggota, GaleriFoto, AdminSlot, TempKey, ActivityLog, SiteSettings,
-  AccessSession, AdminSession, TempPermission, FeedbackSubmission, FeedbackStatus
+  AccessSession, AdminSession, TempPermission, FeedbackSubmission, FeedbackStatus, MusicTrack, MusicSettings
 } from "@/types";
 import { canonicalMemberRole, type MemberRoleSlot } from "./member-roles";
 import { isAdminSlotActive } from "./admin-slot-state";
@@ -342,6 +342,52 @@ export async function updateSiteSettings(payload: Partial<SiteSettings>): Promis
   const { error } = await supabaseAdmin
     .from("site_settings")
     .upsert({ id: 1, ...payload, updated_at: new Date().toISOString() });
+  if (error) throw error;
+}
+
+// ============================================
+// MUSIC PLAYLIST
+// ============================================
+export async function getPublicMusicTracks(): Promise<MusicTrack[]> {
+  const { data, error } = await supabase.from("music_tracks").select("*").eq("is_active", true).order("position").order("created_at");
+  if (error) {
+    if (isMissingSupabaseRelation(error, "music_tracks")) return [];
+    throw error;
+  }
+  return (data ?? []) as MusicTrack[];
+}
+
+export async function getMusicTracks(): Promise<MusicTrack[]> {
+  const { data, error } = await supabaseAdmin.from("music_tracks").select("*").order("position").order("created_at");
+  if (error) throw error;
+  return (data ?? []) as MusicTrack[];
+}
+
+export async function createMusicTrack(payload: Omit<MusicTrack, "id" | "created_at" | "updated_at">): Promise<MusicTrack> {
+  const { data, error } = await supabaseAdmin.from("music_tracks").insert(payload).select("*").single();
+  if (error) throw error;
+  return data as MusicTrack;
+}
+
+export async function updateMusicTrack(id: string, payload: Partial<Pick<MusicTrack, "title" | "artist" | "artwork_url" | "duration_ms" | "position" | "is_active">>): Promise<MusicTrack> {
+  const { data, error } = await supabaseAdmin.from("music_tracks").update({ ...payload, updated_at: new Date().toISOString() }).eq("id", id).select("*").single();
+  if (error) throw error;
+  return data as MusicTrack;
+}
+
+export async function deleteMusicTrack(id: string): Promise<void> {
+  const { error } = await supabaseAdmin.from("music_tracks").delete().eq("id", id);
+  if (error) throw error;
+}
+
+export async function getMusicSettings(): Promise<MusicSettings | null> {
+  const { data, error } = await supabaseAdmin.from("music_settings").select("*").eq("id", 1).maybeSingle();
+  if (error) throw error;
+  return data as MusicSettings | null;
+}
+
+export async function updateMusicSettings(payload: Partial<MusicSettings>): Promise<void> {
+  const { error } = await supabaseAdmin.from("music_settings").upsert({ id: 1, ...payload, updated_at: new Date().toISOString() });
   if (error) throw error;
 }
 
