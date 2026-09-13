@@ -12,8 +12,21 @@ async function authorized() {
 export async function GET(req: NextRequest) {
   try {
     if (!await authorized()) return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 });
+    const action = req.nextUrl.searchParams.get("action");
     const query = req.nextUrl.searchParams.get("q")?.trim();
     const settings = await getMusicSettings();
+    if (action === "test-client-id") {
+      if (!settings?.soundcloud_client_id) return NextResponse.json<ApiResponse>({ success: false, error: "Client ID belum diisi." }, { status: 409 });
+      try {
+        await testSoundCloudClientId(settings.soundcloud_client_id);
+        await updateMusicSettings({ soundcloud_client_id_status: "valid", soundcloud_client_id_checked_at: new Date().toISOString() });
+        return NextResponse.json({ success: true, data: { status: "valid" } });
+      } catch (error) {
+        const expired = isSoundCloudAuthError(error);
+        await updateMusicSettings({ soundcloud_client_id_status: expired ? "expired" : "error", soundcloud_client_id_checked_at: new Date().toISOString() });
+        return NextResponse.json<ApiResponse>({ success: false, error: expired ? "Client ID ditolak atau sudah kedaluwarsa." : "SoundCloud sedang tidak dapat dihubungi." }, { status: expired ? 401 : 502 });
+      }
+    }
     if (!query) {
       const tracks = await getMusicTracks();
       return NextResponse.json({ success: true, data: { tracks, clientIdConfigured: Boolean(settings?.soundcloud_client_id), status: settings?.soundcloud_client_id_status ?? "unchecked", checkedAt: settings?.soundcloud_client_id_checked_at ?? null } });

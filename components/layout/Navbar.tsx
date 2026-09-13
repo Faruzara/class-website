@@ -343,13 +343,13 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
           </div>
         </div>
 
-        <nav aria-label="Dock navigasi utama" className="flex items-center gap-0.5">
+        <nav aria-label="Dock navigasi utama" className="relative flex min-h-11 items-center justify-center gap-0.5">
           <div
             aria-hidden={dockPage !== 1}
             inert={dockPage !== 1}
             className={clsx(
               "flex min-w-0 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-              dockPage === 1 ? "translate-x-0 opacity-100" : "pointer-events-none -translate-x-3 opacity-0"
+              dockPage === 1 ? "translate-x-0 opacity-100" : "pointer-events-none absolute -translate-x-3 opacity-0"
             )}
           >
             {showCreator ? (
@@ -398,13 +398,23 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
               <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
               <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
+
+            <button
+              type="button"
+              onClick={() => { setActivePanel(null); setDockPage(2); }}
+              aria-label="Buka menu 2"
+              className="group relative grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-[background-color,color,box-shadow] hover:bg-white hover:text-gray-900 min-[360px]:size-10"
+            >
+              <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Menu 2</span>
+              <Ellipsis size={19} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            </button>
           </div>
 
           <div
             aria-hidden={dockPage !== 2}
             inert={dockPage !== 2}
             className={clsx(
-              "flex min-w-0 flex-1 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              "flex min-w-0 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
               dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
             )}
           >
@@ -421,18 +431,16 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
               <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Musik</span>
               <Music2 size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
+            <button
+              type="button"
+              onClick={() => { setActivePanel(null); setDockPage(1); }}
+              aria-label="Kembali ke menu utama"
+              className="group relative grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-[background-color,color,box-shadow] hover:bg-white hover:text-gray-900 min-[360px]:size-10"
+            >
+              <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Kembali</span>
+              <ArrowLeft size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            </button>
           </div>
-
-          <button
-            type="button"
-            onClick={() => { setActivePanel(null); setDockPage((page) => page === 1 ? 2 : 1); }}
-            aria-label={dockPage === 1 ? "Buka menu 2" : "Kembali ke menu utama"}
-            aria-pressed={dockPage === 2}
-            className="group relative ml-auto grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-colors hover:bg-white hover:text-gray-900 min-[360px]:size-10"
-          >
-            <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{dockPage === 1 ? "Menu 2" : "Kembali"}</span>
-            {dockPage === 1 ? <Ellipsis size={19} strokeWidth={1.8} /> : <ArrowLeft size={18} strokeWidth={1.8} />}
-          </button>
         </nav>
       </div>
     </>
