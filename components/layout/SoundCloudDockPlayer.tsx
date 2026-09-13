@@ -61,7 +61,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
         widget.getDuration((value) => setDuration(Math.max(0, value)));
       });
       widget.bind(events.PAUSE, () => {
-        if (loadingTrackRef.current) return;
+        if (loadingTrackRef.current || desiredPlayingRef.current) return;
         desiredPlayingRef.current = false;
         pendingPlayRef.current = false;
         setPlayPending(false);
@@ -81,16 +81,19 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
           while (next === value) next = Math.floor(Math.random() * items.length);
           pendingPlayRef.current = true;
           desiredPlayingRef.current = true;
+          setPlayPending(true);
           currentIndexRef.current = next;
           setIndex(next);
         } else if (value < items.length - 1) {
           pendingPlayRef.current = true;
           desiredPlayingRef.current = true;
+          setPlayPending(true);
           currentIndexRef.current = value + 1;
           setIndex(value + 1);
         } else if (repeatModeRef.current === "all") {
           pendingPlayRef.current = true;
           desiredPlayingRef.current = true;
+          setPlayPending(true);
           currentIndexRef.current = 0;
           setIndex(0);
         } else {

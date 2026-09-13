@@ -21,14 +21,10 @@ function cleanTrackName(track: string, artist: string) {
   return cleaned.slice(0, 160);
 }
 
-function withoutFeaturing(track: string) {
-  return track.replace(/\s*(?:[-–—]\s*)?(?:feat(?:uring)?\.?|ft\.?)\s+.+$/i, "").trim();
-}
-
-async function searchLyrics(track: string, artist?: string) {
+async function searchLyrics(track: string, artist: string) {
   const url = new URL("https://lrclib.net/api/search");
   url.searchParams.set("track_name", track);
-  if (artist) url.searchParams.set("artist_name", artist);
+  url.searchParams.set("artist_name", artist);
   const response = await fetch(url, {
     headers: { Accept: "application/json", "Lrclib-Client": "XI-TP2-Class-Site/1.0" },
     next: { revalidate: 86_400 },
@@ -44,24 +40,20 @@ export async function GET(req: NextRequest) {
   const durationSeconds = Math.max(0, Number(req.nextUrl.searchParams.get("duration_ms")) / 1000);
   if (!artist || !rawTrack) return NextResponse.json<ApiResponse>({ success: false, error: "Judul dan artis wajib diisi." }, { status: 400 });
   const track = cleanTrackName(rawTrack, artist);
-  const baseTrack = withoutFeaturing(track);
 
   try {
-    let rows = await searchLyrics(track, artist);
-    if (!rows.length && normalized(baseTrack) !== normalized(track)) rows = await searchLyrics(baseTrack);
+    const rows = await searchLyrics(track, artist);
     const targetTrack = normalized(track);
-    const targetBaseTrack = normalized(baseTrack);
     const targetArtist = normalized(artist);
     const best = rows
-      .filter((row) => row && (row.syncedLyrics || row.plainLyrics || row.instrumental))
+      .filter((row) => row
+        && normalized(row.trackName ?? "") === targetTrack
+        && normalized(row.artistName ?? "") === targetArtist
+        && (row.syncedLyrics || row.plainLyrics || row.instrumental))
       .sort((a, b) => {
         const score = (row: LrcLibResult) => {
-          const rowTrack = normalized(row.trackName ?? "");
-          const rowArtist = normalized(row.artistName ?? "");
           const durationDifference = durationSeconds > 0 && row.duration ? Math.abs(row.duration - durationSeconds) : Infinity;
-          return (rowTrack === targetTrack ? 6 : rowTrack === targetBaseTrack ? 5 : 0)
-            + (rowArtist === targetArtist ? 5 : rowArtist.includes(targetArtist) || targetArtist.includes(rowArtist) ? 2 : 0)
-            + (durationDifference <= 2 ? 4 : durationDifference <= 5 ? 3 : durationDifference <= 15 ? 1 : 0)
+          return (durationDifference <= 2 ? 4 : durationDifference <= 5 ? 3 : durationDifference <= 15 ? 1 : 0)
             + (row.syncedLyrics ? 2 : 0);
         };
         return score(b) - score(a);
