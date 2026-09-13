@@ -26,8 +26,8 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
   const [showCreator, setShowCreator] = useState(false);
   const [creatorUrl, setCreatorUrl] = useState(CREATOR_GITHUB_URL);
   const [socialLinks, setSocialLinks] = useState({ instagram: "", tiktok: "" });
-  const [activePanel, setActivePanel] = useState<"announcements" | "feedback" | null>(null);
-  const [renderedPanel, setRenderedPanel] = useState<"announcements" | "feedback">("feedback");
+  const [activePanel, setActivePanel] = useState<"announcements" | "feedback" | "music" | null>(null);
+  const [renderedPanel, setRenderedPanel] = useState<"announcements" | "feedback" | "music">("feedback");
   const [unread, setUnread] = useState(false);
   const [feedbackType, setFeedbackType] = useState<FeedbackType>("bug");
   const [feedbackMessage, setFeedbackMessage] = useState("");
@@ -69,7 +69,7 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", escape); };
   }, [activePanel]);
 
-  function togglePanel(panel: "announcements" | "feedback") {
+  function togglePanel(panel: "announcements" | "feedback" | "music") {
     setDockRevealed(true);
     setDockHiddenForFooter(false);
     if (activePanel === panel) {
@@ -285,7 +285,14 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
           )}
         >
           <div className="min-h-0 overflow-hidden">
-            {renderedPanel === "feedback" ? (
+            {renderedPanel === "music" ? (
+              <section aria-label="Pemutar musik SoundCloud" className="pb-2 text-gray-900">
+                <div className="flex min-h-16 items-center rounded-xl border border-white/75 bg-white/45 px-2 py-2">
+                  <SoundCloudDockPlayer tracks={musicTracks} />
+                  <button type="button" onClick={() => setActivePanel(null)} className="ml-1 grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 transition-colors hover:text-gray-900" aria-label="Tutup pemutar musik"><X size={14} /></button>
+                </div>
+              </section>
+            ) : renderedPanel === "feedback" ? (
               <section aria-label="Kirim feedback" className="pb-2 text-gray-900">
                 {feedbackState === "sent" ? (
                   <div className="px-3 py-6 text-center">
@@ -397,11 +404,23 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
             aria-hidden={dockPage !== 2}
             inert={dockPage !== 2}
             className={clsx(
-              "min-w-0 flex-1 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              "flex min-w-0 flex-1 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
               dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
             )}
           >
-            <SoundCloudDockPlayer tracks={musicTracks} />
+            <button
+              type="button"
+              onClick={() => togglePanel("music")}
+              aria-label="Musik"
+              aria-expanded={activePanel === "music"}
+              className={clsx(
+                "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
+                activePanel === "music" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+              )}
+            >
+              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Musik</span>
+              <Music2 size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+            </button>
           </div>
 
           <button
