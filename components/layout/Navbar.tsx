@@ -10,6 +10,7 @@ import clsx from "clsx";
 import type { ApiResponse, FeedbackType, Pengumuman } from "@/types";
 import { isAnnouncementVisible } from "@/lib/announcement-expiry";
 import SoundCloudDockPlayer from "./SoundCloudDockPlayer";
+import SoundCloudLyricsColumn from "./SoundCloudLyricsColumn";
 import type { MusicTrack } from "@/types";
 
 const NAV_LINKS = [
@@ -421,11 +422,7 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
               dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
             )}
           >
-            {showCreator ? (
-              <a href={creatorUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={(event) => { if (!creatorUrl) event.preventDefault(); }} aria-label="GitHub pembuat situs" className="group relative grid h-11 min-w-12 place-items-center rounded-xl bg-white text-gray-900 shadow-sm animate-in fade-in zoom-in"><Github size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" /></a>
-            ) : (
-              <Link href="/" aria-label="XI TP2 — Beranda" className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white">XI TP2</Link>
-            )}
+            <SoundCloudLyricsColumn />
             <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
             <button
               type="button"

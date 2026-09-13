@@ -63,6 +63,11 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     widgetRef.current.load(current.soundcloud_url, { auto_play: false, hide_related: true, show_comments: false, show_user: false, show_reposts: false, visual: false });
   }, [current?.id]);
 
+  useEffect(() => {
+    if (!current) return;
+    window.dispatchEvent(new CustomEvent("soundcloud-player-state", { detail: { id: current.id, title: current.title, artist: current.artist, position, duration, playing } }));
+  }, [current, position, duration, playing]);
+
   function cycleRepeatMode() {
     const next: RepeatMode = repeatMode === "none" ? "all" : repeatMode === "all" ? "one" : "none";
     repeatModeRef.current = next;
