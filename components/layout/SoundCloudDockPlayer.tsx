@@ -18,6 +18,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
   const currentIndexRef = useRef(0);
   const loadedTrackIdRef = useRef<string | null>(null);
   const pendingPlayRef = useRef(false);
+  const desiredPlayingRef = useRef(false);
   const loadingTrackRef = useRef(false);
   const repeatModeRef = useRef<RepeatMode>("none");
   const shuffleRef = useRef(false);
@@ -47,17 +48,28 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
         loadingTrackRef.current = false;
         setWidgetReady(true);
         widget.getDuration((value) => setDuration(Math.max(0, value)));
-        if (pendingPlayRef.current) widget.play();
+        if (desiredPlayingRef.current) widget.play();
       });
-      widget.bind(events.PLAY, () => { pendingPlayRef.current = false; setPlayPending(false); setPlaying(true); widget.getDuration((value) => setDuration(Math.max(0, value))); });
+      widget.bind(events.PLAY, () => {
+        if (!desiredPlayingRef.current) {
+          widget.pause();
+          return;
+        }
+        pendingPlayRef.current = false;
+        setPlayPending(false);
+        setPlaying(true);
+        widget.getDuration((value) => setDuration(Math.max(0, value)));
+      });
       widget.bind(events.PAUSE, () => {
         if (loadingTrackRef.current) return;
+        desiredPlayingRef.current = false;
         pendingPlayRef.current = false;
         setPlayPending(false);
         setPlaying(false);
       });
       widget.bind(events.FINISH, () => {
         if (repeatModeRef.current === "one") {
+          desiredPlayingRef.current = true;
           widget.seekTo(0);
           widget.play();
           return;
@@ -68,25 +80,33 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
           let next = value;
           while (next === value) next = Math.floor(Math.random() * items.length);
           pendingPlayRef.current = true;
+          desiredPlayingRef.current = true;
           currentIndexRef.current = next;
           setIndex(next);
         } else if (value < items.length - 1) {
           pendingPlayRef.current = true;
+          desiredPlayingRef.current = true;
           currentIndexRef.current = value + 1;
           setIndex(value + 1);
         } else if (repeatModeRef.current === "all") {
           pendingPlayRef.current = true;
+          desiredPlayingRef.current = true;
           currentIndexRef.current = 0;
           setIndex(0);
-        } else setPlaying(false);
+        } else {
+          desiredPlayingRef.current = false;
+          setPlaying(false);
+        }
       });
       widget.bind(events.PLAY_PROGRESS, (event) => {
-        pendingPlayRef.current = false;
-        setPlayPending(false);
-        setPlaying(true);
+        if (desiredPlayingRef.current) {
+          pendingPlayRef.current = false;
+          setPlayPending(false);
+          setPlaying(true);
+        }
         setPosition(event?.currentPosition ?? 0);
       });
-      widget.bind(events.ERROR, () => { loadingTrackRef.current = false; pendingPlayRef.current = false; setPlayPending(false); setPlaying(false); setWidgetReady(false); });
+      widget.bind(events.ERROR, () => { loadingTrackRef.current = false; desiredPlayingRef.current = false; pendingPlayRef.current = false; setPlayPending(false); setPlaying(false); setWidgetReady(false); });
     };
     if (window.SC) initialize();
     else {
@@ -102,7 +122,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     setPosition(0); setDuration(current.duration_ms ?? 0); setPlaying(false);
     loadingTrackRef.current = true;
     setWidgetReady(false);
-    widgetRef.current.load(current.soundcloud_url, { auto_play: pendingPlayRef.current, hide_related: true, show_comments: false, show_user: false, show_reposts: false, visual: false, callback: () => { loadingTrackRef.current = false; loadedTrackIdRef.current = current.id; setWidgetReady(true); widgetRef.current?.getDuration((value) => setDuration(Math.max(0, value))); if (pendingPlayRef.current) widgetRef.current?.play(); } });
+    widgetRef.current.load(current.soundcloud_url, { auto_play: desiredPlayingRef.current, hide_related: true, show_comments: false, show_user: false, show_reposts: false, visual: false, callback: () => { loadingTrackRef.current = false; loadedTrackIdRef.current = current.id; setWidgetReady(true); widgetRef.current?.getDuration((value) => setDuration(Math.max(0, value))); if (desiredPlayingRef.current) widgetRef.current?.play(); } });
   }, [current?.id, widgetReady]);
 
   useEffect(() => {
@@ -120,6 +140,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     if (!tracks.length) return;
     const normalized = (next + tracks.length) % tracks.length;
     const commit = (shouldPlay: boolean) => {
+      desiredPlayingRef.current = shouldPlay;
       pendingPlayRef.current = shouldPlay;
       setPlayPending(shouldPlay);
       currentIndexRef.current = normalized;
@@ -142,13 +163,24 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
   function togglePlayback() {
     const widget = widgetRef.current;
     if (!widget || !widgetReady) {
+      desiredPlayingRef.current = true;
       pendingPlayRef.current = true;
       setPlayPending(true);
       return;
     }
     widget.isPaused((paused) => {
-      if (paused) { pendingPlayRef.current = true; setPlayPending(true); widget.play(); }
-      else widget.pause();
+      if (paused) {
+        desiredPlayingRef.current = true;
+        pendingPlayRef.current = true;
+        setPlayPending(true);
+        widget.play();
+      } else {
+        desiredPlayingRef.current = false;
+        pendingPlayRef.current = false;
+        setPlayPending(false);
+        setPlaying(false);
+        widget.pause();
+      }
     });
   }
 
@@ -163,7 +195,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     {artwork && brokenArtworkId !== current.id ? <img src={artwork} alt="" referrerPolicy="no-referrer" aria-hidden="true" className="absolute inset-0 size-full scale-110 object-cover opacity-[0.16] blur-[5px] grayscale" /> : null}
     <div aria-hidden="true" className="absolute inset-0 bg-white/75" />
     <div aria-hidden="true" className="absolute inset-0 opacity-30 [background-image:linear-gradient(115deg,transparent_12%,rgba(17,24,39,0.08)_12.5%,transparent_13%),linear-gradient(20deg,transparent_72%,rgba(17,24,39,0.06)_72.5%,transparent_73%)]" />
-    <a href={current.soundcloud_url} target="_blank" rel="noopener noreferrer" className="absolute right-9 top-2 z-20 text-[7px] font-semibold tracking-wide text-gray-500 hover:text-gray-900">SoundCloud</a>
+    <a href={current.soundcloud_url} target="_blank" rel="noopener noreferrer" className="absolute left-3 top-2 z-20 text-[7px] font-semibold tracking-wide text-gray-500 hover:text-gray-900">SoundCloud</a>
 
     <div className="relative z-10 grid size-[94px] shrink-0 place-items-center" aria-hidden="true">
       <div className="relative size-[68px] overflow-hidden rounded-full bg-gray-900 shadow-[0_4px_16px_rgba(17,24,39,0.22)]">
