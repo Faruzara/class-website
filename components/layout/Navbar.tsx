@@ -290,9 +290,9 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
           <div className="min-h-0 overflow-hidden">
             {renderedPanel === "music" ? (
               <section aria-label="Pemutar musik SoundCloud" className="pb-2 text-gray-900">
-                <div className="flex min-h-16 items-center rounded-xl border border-white/75 bg-white/45 px-2 py-2">
+                <div className="relative flex min-h-[7rem] items-center overflow-hidden rounded-xl border border-white/75 bg-white/45">
                   <SoundCloudDockPlayer tracks={musicTracks} />
-                  <button type="button" onClick={() => setActivePanel(null)} className="ml-1 grid size-7 shrink-0 place-items-center rounded-lg text-gray-400 transition-colors hover:text-gray-900" aria-label="Tutup pemutar musik"><X size={14} /></button>
+                  <button type="button" onClick={() => setActivePanel(null)} className="absolute right-1.5 top-1.5 z-20 grid size-7 place-items-center rounded-lg text-gray-400 transition-colors hover:text-gray-900" aria-label="Tutup pemutar musik"><X size={13} /></button>
                 </div>
               </section>
             ) : renderedPanel === "feedback" ? (
