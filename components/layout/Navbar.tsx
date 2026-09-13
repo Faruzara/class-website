@@ -148,7 +148,7 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
       if (entry?.isIntersecting) {
         if (footerHideTimerRef.current !== null) window.clearTimeout(footerHideTimerRef.current);
         footerHideTimerRef.current = window.setTimeout(() => {
-          setActivePanel(null);
+          setActivePanel((panel) => panel === "music" ? panel : null);
           setDockHiddenForFooter(true);
         }, 2000);
       } else {
@@ -171,7 +171,7 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
   }, [pathname]);
 
   useEffect(() => {
-    if (dockAtPageEdge) setActivePanel(null);
+    if (dockAtPageEdge) setActivePanel((panel) => panel === "music" ? panel : null);
   }, [dockAtPageEdge]);
 
   async function sendFeedback(event: React.FormEvent) {
@@ -221,7 +221,8 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
     return () => window.removeEventListener("creator-github-egg", reveal);
   }, []);
 
-  const dockVisible = activePanel !== null || dockNeededForShortPage || (dockRevealed && !dockHiddenForFooter && !dockAtPageEdge);
+  const panelKeepsDockVisible = activePanel !== null && activePanel !== "music";
+  const dockVisible = panelKeepsDockVisible || dockNeededForShortPage || (dockRevealed && !dockHiddenForFooter && !dockAtPageEdge);
 
   return (
     <>
@@ -418,34 +419,36 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
             aria-hidden={dockPage !== 2}
             inert={dockPage !== 2}
             className={clsx(
-              "flex min-w-0 items-center gap-0.5 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
-              dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
+              "flex min-w-0 items-center justify-between gap-1 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+              dockPage === 2 ? "w-full translate-x-0 opacity-100" : "pointer-events-none absolute inset-x-0 translate-x-3 opacity-0"
             )}
           >
             <SoundCloudLyricsColumn />
-            <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
-            <button
-              type="button"
-              onClick={() => togglePanel("music")}
-              aria-label="Musik"
-              aria-expanded={activePanel === "music"}
-              className={clsx(
-                DOCK_ICON_CLASS,
-                activePanel === "music" ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE
-              )}
-            >
-              <span className={DOCK_TOOLTIP_CLASS}>Musik</span>
-              <Music2 size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
-            </button>
-            <button
-              type="button"
-              onClick={() => { setActivePanel(null); setDockPage(1); }}
-              aria-label="Kembali ke menu utama"
-              className={clsx(DOCK_ICON_CLASS, DOCK_ICON_IDLE)}
-            >
-              <span className={DOCK_TOOLTIP_CLASS}>Kembali</span>
-              <ArrowLeft size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
-            </button>
+            <div className="ml-auto flex shrink-0 items-center gap-0.5">
+              <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
+              <button
+                type="button"
+                onClick={() => togglePanel("music")}
+                aria-label="Musik"
+                aria-expanded={activePanel === "music"}
+                className={clsx(
+                  DOCK_ICON_CLASS,
+                  activePanel === "music" ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE
+                )}
+              >
+                <span className={DOCK_TOOLTIP_CLASS}>Musik</span>
+                <Music2 size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              </button>
+              <button
+                type="button"
+                onClick={() => { setActivePanel(null); setDockPage(1); }}
+                aria-label="Kembali ke menu utama"
+                className={clsx(DOCK_ICON_CLASS, DOCK_ICON_IDLE)}
+              >
+                <span className={DOCK_TOOLTIP_CLASS}>Kembali</span>
+                <ArrowLeft size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              </button>
+            </div>
           </div>
         </nav>
       </div>

@@ -48,7 +48,7 @@ export default function SoundCloudLyricsColumn() {
   const currentLine = timed.length ? timed[activeIndex]?.text : plain[activeIndex];
   const nextLine = timed.length ? timed[activeIndex + 1]?.text : plain[activeIndex + 1];
 
-  return <div aria-live="polite" aria-label="Lirik lagu" className="flex h-11 w-[10.5rem] shrink-0 items-center gap-2 overflow-hidden rounded-xl px-2 text-left text-gray-700 min-[390px]:w-[11.5rem]">
+  return <div aria-live="polite" aria-label="Lirik lagu" className="flex h-11 min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-1 text-left text-gray-700">
     <AudioLines size={14} strokeWidth={1.6} className={`shrink-0 ${player?.playing ? "text-gray-900" : "text-gray-400"}`} aria-hidden="true" />
     <div className="min-w-0 flex-1">
       {!player ? <p className="truncate text-[9px] text-gray-400">Buka pemutar untuk lirik</p> : lyrics === undefined ? <p className="truncate text-[9px] text-gray-400">Mencari lirik…</p> : lyrics?.instrumental ? <p className="truncate text-[9px] text-gray-500">Instrumental</p> : currentLine ? <><p key={`${player.id}-${activeIndex}`} className="truncate text-[9px] font-semibold leading-4 text-gray-900 animate-in fade-in slide-in-from-bottom-1">{currentLine}</p>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : <p className="truncate text-[9px] text-gray-400">Lirik tidak ditemukan</p>}
