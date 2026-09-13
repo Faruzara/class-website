@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import type { JadwalItem } from "@/types";
 import { getActiveScheduleWeek, offsetForScheduleWeek, type ScheduleWeek } from "@/lib/schedule-week";
+import SchedulePdfImport from "@/components/admin/SchedulePdfImport";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 const SCHOOL_PERIODS = Array.from({ length: 11 }, (_, index) => index + 1);
@@ -93,6 +94,7 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
           </div>
         </div>
       </section>
+      <SchedulePdfImport onImported={refresh} />
       <form ref={formRef} onSubmit={submit} className="card grid scroll-mt-6 gap-4 sm:grid-cols-2">
         <div className="flex items-center justify-between gap-4 sm:col-span-2">
           <h2 className="text-sm font-semibold text-gray-900">{editingId ? "Edit jadwal" : "Tambah jadwal"}</h2>

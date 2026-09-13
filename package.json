@@ -10,8 +10,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "schedule:import:dry": "node scripts/import-xi-tp2-schedule.cjs",
-    "schedule:import": "node scripts/import-xi-tp2-schedule.cjs --apply",
     "media:migrate:dry": "node scripts/migrate-public-media-to-cloudinary.cjs",
     "media:migrate": "node scripts/migrate-public-media-to-cloudinary.cjs --apply"
   },
@@ -29,6 +27,7 @@
     "motion": "^13.2.0",
     "next": "15.5.24",
     "ogl": "^1.0.11",
+    "pdfjs-dist": "^6.3.289",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },

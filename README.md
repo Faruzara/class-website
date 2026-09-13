@@ -86,14 +86,9 @@ Admin mengelola jadwal, anggota, galeri, pengumuman, dan Moments sesuai hak akse
 
 Jadwal menggunakan dua set data: Week 1 dan Week 2. Minggu aktif dapat mengikuti pengaturan otomatis atau dipindahkan manual dari dashboard Admin ketika jadwal aktual tidak sesuai.
 
-Jadwal XI TP2 tahun pelajaran 2026/2027 yang sudah diekstrak dari PDF dapat diperiksa dan diimpor tanpa duplikasi:
+Dashboard Admin menyediakan fitur **Import PDF** untuk file keluaran aSc Timetables. Sistem mendeteksi seluruh kelas dan nomor halaman secara otomatis, menampilkan preview, lalu menyediakan mode **Gabungkan** atau **Ganti Jadwal**. Nama kelas dan nomor halaman tidak di-hardcode, sehingga fitur tetap dapat digunakan ketika kelas naik tingkat.
 
-```bash
-npm run schedule:import:dry
-npm run schedule:import
-```
-
-Import melakukan merge berdasarkan hari, minggu, jam mulai, dan mata pelajaran. Proses dibatalkan jika ditemukan entri lain yang bertabrakan.
+File dibatasi maksimal 10 MB dan baru disimpan setelah Admin memilih kelas serta mengonfirmasi import. Mode Gabungkan dibatalkan jika hasil PDF bertabrakan dengan jadwal lain.
 
 ## Media dan folder environment
 

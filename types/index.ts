@@ -116,6 +116,14 @@ export interface JadwalItem {
   end_period: number;
 }
 
+export type ScheduleImportItem = Omit<JadwalItem, "id">;
+
+export interface ParsedScheduleClass {
+  class_name: string;
+  page_number: number;
+  items: ScheduleImportItem[];
+}
+
 // -- Anggota kelas --
 export interface Anggota {
   id: string;
