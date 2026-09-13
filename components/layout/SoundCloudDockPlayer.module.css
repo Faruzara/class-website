@@ -1,3 +1,16 @@
+.disc {
+  animation: soundcloud-disc-spin 9s linear infinite;
+  animation-play-state: paused;
+}
+
+.disc[data-playing="true"] {
+  animation-play-state: running;
+}
+
+@keyframes soundcloud-disc-spin {
+  to { transform: rotate(360deg); }
+}
+
 .equalizer {
   position: absolute;
   z-index: 5;

@@ -36,7 +36,7 @@ export default function SoundCloudLyricsColumn() {
     if (!player?.id) return;
     const controller = new AbortController();
     setLyrics(undefined);
-    fetch(`/api/public/lyrics?track=${encodeURIComponent(player.title)}&artist=${encodeURIComponent(player.artist)}`, { signal: controller.signal })
+    fetch(`/api/public/lyrics?track=${encodeURIComponent(player.title)}&artist=${encodeURIComponent(player.artist)}&duration_ms=${Math.max(0, Math.round(player.duration))}`, { signal: controller.signal })
       .then(async (response) => {
         const result = await response.json() as ApiResponse<LyricsResponse | null>;
         if (!response.ok || !result.success) throw new Error(result.error);
@@ -44,11 +44,12 @@ export default function SoundCloudLyricsColumn() {
       })
       .catch((error) => { if (!(error instanceof DOMException && error.name === "AbortError")) setLyrics(null); });
     return () => controller.abort();
-  }, [player?.id, player?.title, player?.artist]);
+  }, [player?.id, player?.title, player?.artist, player?.duration]);
 
   const timed = useMemo(() => parseSyncedLyrics(lyrics?.syncedLyrics ?? null), [lyrics?.syncedLyrics]);
   const plain = useMemo(() => (lyrics?.plainLyrics ?? "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean), [lyrics?.plainLyrics]);
-  const activeIndex = timed.length ? Math.max(0, timed.findLastIndex((line) => line.at <= (player?.position ?? 0))) : plain.length ? Math.min(plain.length - 1, Math.floor((player?.position ?? 0) / 5000)) : -1;
+  const activeIndex = timed.length ? timed.findLastIndex((line) => line.at <= (player?.position ?? 0)) : plain.length ? Math.min(plain.length - 1, Math.floor((player?.position ?? 0) / 5000)) : -1;
+  const waitingForFirstLine = timed.length > 0 && activeIndex < 0;
   const currentLine = timed.length ? timed[activeIndex]?.text : plain[activeIndex];
   const nextLine = timed.length ? timed[activeIndex + 1]?.text : plain[activeIndex + 1];
   const lineDuration = timed.length && activeIndex >= 0
@@ -69,7 +70,7 @@ export default function SoundCloudLyricsColumn() {
   return <div aria-live="polite" aria-label="Lirik lagu" className="flex h-11 min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-1 text-left text-gray-700">
     <AudioLines size={14} strokeWidth={1.6} className={`shrink-0 ${player?.playing ? "text-gray-900" : "text-gray-400"}`} aria-hidden="true" />
     <div className="min-w-0 flex-1">
-      {!player ? <p className="truncate text-[9px] text-gray-400">Buka pemutar untuk lirik</p> : lyrics === undefined ? <p className="truncate text-[9px] text-gray-400">Mencari lirik…</p> : lyrics?.instrumental ? <p className="truncate text-[9px] text-gray-500">Instrumental</p> : currentLine ? <><div ref={lineViewportRef} className={styles.viewport}><p ref={lineRef} key={`${player.id}-${activeIndex}`} data-playing={player.playing ? "true" : "false"} data-scroll={lineOverflow > 2 ? "true" : "false"} className={styles.activeLine} style={{ "--lyrics-shift": `${lineOverflow}px`, "--lyrics-duration": `${lineDuration}s` } as CSSProperties}>{currentLine}</p></div>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : <p className="truncate text-[9px] text-gray-400">Lirik tidak ditemukan</p>}
+      {!player ? <p className="truncate text-[9px] text-gray-400">Buka pemutar untuk lirik</p> : lyrics === undefined ? <p className="truncate text-[9px] text-gray-400">Mencari lirik…</p> : lyrics?.instrumental ? <p className="truncate text-[9px] text-gray-500">Instrumental</p> : waitingForFirstLine ? <><p className="text-[9px] font-semibold leading-4 text-gray-500">♪ Intro</p>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : currentLine ? <><div ref={lineViewportRef} className={styles.viewport}><p ref={lineRef} key={`${player.id}-${activeIndex}`} data-playing={player.playing ? "true" : "false"} data-scroll={lineOverflow > 2 ? "true" : "false"} className={styles.activeLine} style={{ "--lyrics-shift": `${lineOverflow}px`, "--lyrics-duration": `${lineDuration}s` } as CSSProperties}>{currentLine}</p></div>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : <p className="truncate text-[9px] text-gray-400">Lirik tidak ditemukan</p>}
     </div>
   </div>;
 }
