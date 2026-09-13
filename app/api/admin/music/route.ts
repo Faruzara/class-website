@@ -53,17 +53,27 @@ export async function POST(req: NextRequest) {
     const session = await authorized();
     if (!session) return NextResponse.json<ApiResponse>({ success: false, error: "Unauthorized" }, { status: 401 });
     const body = await req.json() as { action?: string; clientId?: string; url?: string; track?: SoundCloudTrackResult };
-    if (body.action === "save-client-id") {
+    if (body.action === "save-client-id" || body.action === "test-client-id-candidate") {
       const clientId = body.clientId?.trim();
       if (!clientId || clientId.length > 300) return NextResponse.json<ApiResponse>({ success: false, error: "Client ID tidak valid." }, { status: 400 });
+      const settings = await getMusicSettings();
+      const canReplaceClientId = session.role === "owner"
+        || !settings?.soundcloud_client_id
+        || settings.soundcloud_client_id_status === "expired";
+      if (!canReplaceClientId) {
+        return NextResponse.json<ApiResponse>({ success: false, error: "Admin hanya dapat mengganti Client ID saat kredensial aktif terdeteksi kedaluwarsa." }, { status: 403 });
+      }
       try {
         await testSoundCloudClientId(clientId);
+        if (body.action === "test-client-id-candidate") {
+          return NextResponse.json({ success: true, data: { status: "valid" } });
+        }
         await updateMusicSettings({ soundcloud_client_id: clientId, soundcloud_client_id_status: "valid", soundcloud_client_id_checked_at: new Date().toISOString() });
+        await logActivity({ actor_role: session.role, actor_label: session.label, action: "soundcloud_client_id_changed", detail: "Client ID SoundCloud diuji dan diperbarui" });
         return NextResponse.json({ success: true, data: { status: "valid" } });
       } catch (error) {
         const status = isSoundCloudAuthError(error) ? "expired" : "error";
-        await updateMusicSettings({ soundcloud_client_id: clientId, soundcloud_client_id_status: status, soundcloud_client_id_checked_at: new Date().toISOString() });
-        return NextResponse.json<ApiResponse>({ success: false, error: status === "expired" ? "Client ID ditolak atau sudah kedaluwarsa." : "Client ID tersimpan, tetapi belum dapat diverifikasi." }, { status: status === "expired" ? 400 : 502 });
+        return NextResponse.json<ApiResponse>({ success: false, error: status === "expired" ? "Client ID baru ditolak atau sudah kedaluwarsa. ID lama tidak diubah." : "Client ID baru belum dapat diverifikasi. ID lama tidak diubah." }, { status: status === "expired" ? 400 : 502 });
       }
     }
     const metadata = await resolveSoundCloudTrack(body.track?.soundcloud_url ?? body.url);

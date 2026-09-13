@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { AudioLines } from "lucide-react";
 import type { ApiResponse } from "@/types";
+import styles from "./SoundCloudLyricsColumn.module.css";
 
 type PlayerState = { id: string; title: string; artist: string; position: number; duration: number; playing: boolean };
 type LyricsResponse = { syncedLyrics: string | null; plainLyrics: string | null; instrumental: boolean };
@@ -21,6 +22,9 @@ function parseSyncedLyrics(value: string | null): TimedLine[] {
 export default function SoundCloudLyricsColumn() {
   const [player, setPlayer] = useState<PlayerState | null>(null);
   const [lyrics, setLyrics] = useState<LyricsResponse | null | undefined>(undefined);
+  const [lineOverflow, setLineOverflow] = useState(0);
+  const lineViewportRef = useRef<HTMLDivElement>(null);
+  const lineRef = useRef<HTMLParagraphElement>(null);
 
   useEffect(() => {
     const update = (event: Event) => setPlayer((event as CustomEvent<PlayerState>).detail);
@@ -47,11 +51,25 @@ export default function SoundCloudLyricsColumn() {
   const activeIndex = timed.length ? Math.max(0, timed.findLastIndex((line) => line.at <= (player?.position ?? 0))) : plain.length ? Math.min(plain.length - 1, Math.floor((player?.position ?? 0) / 5000)) : -1;
   const currentLine = timed.length ? timed[activeIndex]?.text : plain[activeIndex];
   const nextLine = timed.length ? timed[activeIndex + 1]?.text : plain[activeIndex + 1];
+  const lineDuration = timed.length && activeIndex >= 0
+    ? Math.min(10, Math.max(2.5, ((timed[activeIndex + 1]?.at ?? timed[activeIndex].at + 7000) - timed[activeIndex].at) / 1000))
+    : 7;
+
+  useLayoutEffect(() => {
+    const viewport = lineViewportRef.current;
+    const line = lineRef.current;
+    if (!viewport || !line) { setLineOverflow(0); return; }
+    const measure = () => setLineOverflow(Math.max(0, line.scrollWidth - viewport.clientWidth));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, [currentLine]);
 
   return <div aria-live="polite" aria-label="Lirik lagu" className="flex h-11 min-w-0 flex-1 items-center gap-2 overflow-hidden rounded-xl px-1 text-left text-gray-700">
     <AudioLines size={14} strokeWidth={1.6} className={`shrink-0 ${player?.playing ? "text-gray-900" : "text-gray-400"}`} aria-hidden="true" />
     <div className="min-w-0 flex-1">
-      {!player ? <p className="truncate text-[9px] text-gray-400">Buka pemutar untuk lirik</p> : lyrics === undefined ? <p className="truncate text-[9px] text-gray-400">Mencari lirik…</p> : lyrics?.instrumental ? <p className="truncate text-[9px] text-gray-500">Instrumental</p> : currentLine ? <><p key={`${player.id}-${activeIndex}`} className="truncate text-[9px] font-semibold leading-4 text-gray-900 animate-in fade-in slide-in-from-bottom-1">{currentLine}</p>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : <p className="truncate text-[9px] text-gray-400">Lirik tidak ditemukan</p>}
+      {!player ? <p className="truncate text-[9px] text-gray-400">Buka pemutar untuk lirik</p> : lyrics === undefined ? <p className="truncate text-[9px] text-gray-400">Mencari lirik…</p> : lyrics?.instrumental ? <p className="truncate text-[9px] text-gray-500">Instrumental</p> : currentLine ? <><div ref={lineViewportRef} className={styles.viewport}><p ref={lineRef} key={`${player.id}-${activeIndex}`} data-playing={player.playing ? "true" : "false"} data-scroll={lineOverflow > 2 ? "true" : "false"} className={styles.activeLine} style={{ "--lyrics-shift": `${lineOverflow}px`, "--lyrics-duration": `${lineDuration}s` } as CSSProperties}>{currentLine}</p></div>{nextLine ? <p className="truncate text-[8px] leading-3 text-gray-400">{nextLine}</p> : null}</> : <p className="truncate text-[9px] text-gray-400">Lirik tidak ditemukan</p>}
     </div>
   </div>;
 }

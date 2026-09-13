@@ -1,0 +1,33 @@
+.viewport {
+  width: 100%;
+  overflow: hidden;
+}
+
+.activeLine {
+  width: max-content;
+  min-width: 100%;
+  white-space: nowrap;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 16px;
+  color: rgb(17 24 39);
+  will-change: transform;
+}
+
+.activeLine[data-scroll="true"] {
+  animation: lyric-pan var(--lyrics-duration, 7s) linear both;
+  animation-play-state: paused;
+}
+
+.activeLine[data-scroll="true"][data-playing="true"] {
+  animation-play-state: running;
+}
+
+@keyframes lyric-pan {
+  0%, 12% { transform: translateX(0); }
+  88%, 100% { transform: translateX(calc(-1 * var(--lyrics-shift))); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activeLine[data-scroll="true"] { animation: none; }
+}

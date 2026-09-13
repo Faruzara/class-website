@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
-import { ArrowDown, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, HelpCircle, Loader2, Play, Plus, RefreshCw, Save, Search, Trash2, X, XCircle } from "lucide-react";
-import type { ApiResponse, MusicTrack, SoundCloudTrackResult } from "@/types";
+import { useEffect, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowRight, ArrowUp, CheckCircle2, ChevronDown, ChevronUp, Eye, EyeOff, ExternalLink, HelpCircle, Loader2, Play, Plus, RefreshCw, Save, Search, Trash2, X, XCircle } from "lucide-react";
+import type { ApiResponse, MusicTrack, Role, SoundCloudTrackResult } from "@/types";
 
-type InitialState = { tracks: MusicTrack[]; clientIdConfigured: boolean; status: string; checkedAt: string | null };
+type InitialState = { tracks: MusicTrack[]; actorRole: Role; clientIdConfigured: boolean; status: string; checkedAt: string | null };
 
 async function request(path: string, options?: RequestInit) {
   const response = await fetch(path, options);
@@ -13,29 +13,41 @@ async function request(path: string, options?: RequestInit) {
   return result.data;
 }
 
-function StatusBadge({ status, configured, checkedAt }: { status: string; configured: boolean; checkedAt: string | null }) {
+function relativeCheckedAt(checkedAt: string | null, now: number) {
+  if (!checkedAt) return "belum pernah diperiksa";
+  const seconds = Math.max(0, Math.floor((now - new Date(checkedAt).getTime()) / 1000));
+  if (seconds < 60) return "baru saja";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} menit lalu`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} jam lalu`;
+  return `${Math.floor(hours / 24)} hari lalu`;
+}
+
+function StatusLine({ status, configured, checkedAt, now }: { status: string; configured: boolean; checkedAt: string | null; now: number }) {
   const states: Record<string, { icon: ReactNode; label: string; className: string }> = {
-    valid: { icon: <CheckCircle2 size={13} />, label: "Aktif", className: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-    expired: { icon: <XCircle size={13} />, label: "Kedaluwarsa", className: "border-rose-200 bg-rose-50 text-rose-700" },
-    error: { icon: <XCircle size={13} />, label: "Tidak dapat diperiksa", className: "border-amber-200 bg-amber-50 text-amber-700" },
-    unchecked: { icon: <RefreshCw size={13} />, label: configured ? "Belum diperiksa" : "Belum diisi", className: "border-gray-200 bg-gray-100 text-gray-500" },
+    valid: { icon: <CheckCircle2 size={13} />, label: "Valid", className: "text-emerald-700" },
+    expired: { icon: <XCircle size={13} />, label: "Kedaluwarsa", className: "text-rose-700" },
+    error: { icon: <XCircle size={13} />, label: "Pemeriksaan gagal", className: "text-amber-700" },
+    unchecked: { icon: <RefreshCw size={13} />, label: configured ? "Belum diperiksa" : "Belum diisi", className: "text-gray-500" },
   };
   const state = states[status] ?? states.unchecked;
-  const time = checkedAt ? new Date(checkedAt).toLocaleString("id-ID", { dateStyle: "short", timeStyle: "short" }) : null;
-  return <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium ${state.className}`}>{state.icon}{state.label}{time ? <span className="hidden opacity-60 sm:inline">· {time}</span> : null}</span>;
+  return <p className="flex flex-wrap items-center gap-1.5 text-xs text-gray-500"><span>Status:</span><span className={`inline-flex items-center gap-1 font-semibold ${state.className}`}>{state.icon}{state.label}</span><span>· Terakhir diperiksa {relativeCheckedAt(checkedAt, now)}</span></p>;
 }
 
 function ClientIdGuide({ onClose }: { onClose: () => void }) {
   return <div role="dialog" aria-modal="true" aria-labelledby="soundcloud-guide-title" className="fixed inset-0 z-[100] flex items-end justify-center bg-black/35 backdrop-blur-sm sm:items-center sm:p-4" onMouseDown={(event) => { if (event.currentTarget === event.target) onClose(); }}>
     <section className="w-full max-w-lg rounded-t-3xl bg-white p-6 shadow-2xl sm:rounded-2xl">
-      <div className="flex items-start justify-between gap-4"><div><h3 id="soundcloud-guide-title" className="font-display text-base font-semibold text-gray-900">Menyiapkan Client ID</h3><p className="mt-1 text-xs leading-5 text-gray-500">Gunakan kredensial aplikasi SoundCloud milik sendiri agar akses stabil dan dapat dikelola.</p></div><button onClick={onClose} className="grid size-8 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="Tutup panduan"><X size={16} /></button></div>
-      <ol className="mt-5 space-y-4 text-sm text-gray-700">
-        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">1</span><p>Buka halaman developer SoundCloud dan daftarkan aplikasi yang digunakan situs ini.</p></li>
-        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">2</span><p>Salin Client ID aplikasi tersebut. Jangan memasukkan Client Secret ke situs.</p></li>
-        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">3</span><p>Tempel Client ID di halaman ini, kemudian pilih Simpan & cek.</p></li>
+      <div className="flex items-start justify-between gap-4"><div><h3 id="soundcloud-guide-title" className="font-display text-base font-semibold text-gray-900">Panduan mengambil Client ID</h3><p className="mt-1 text-xs leading-5 text-gray-500">Client ID dipakai server hanya untuk pencarian lagu publik. Jangan pernah menempelkan Client Secret.</p></div><button type="button" onClick={onClose} className="grid size-8 shrink-0 place-items-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700" aria-label="Tutup panduan"><X size={16} /></button></div>
+      <ol className="mt-5 space-y-4 text-sm leading-6 text-gray-700">
+        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">1</span><p>Masuk ke akun SoundCloud. Pendaftaran aplikasi API resmi saat ini memerlukan akun Artist Pro.</p></li>
+        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">2</span><p>Buka halaman pendaftaran aplikasi, lalu isi nama aplikasi, deskripsi penggunaan untuk pencarian playlist kelas, dan alamat situs bila diminta.</p></li>
+        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">3</span><p>Setujui ketentuan SoundCloud dan buat aplikasi. Dari halaman kredensial aplikasi, salin nilai <strong>Client ID</strong> saja.</p></li>
+        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">4</span><p>Tempel Client ID di halaman ini, pilih <strong>Test</strong>, lalu <strong>Save</strong>. Jika pengujian gagal, nilai lama tetap disimpan dan tidak ditimpa.</p></li>
+        <li className="flex gap-3"><span className="grid size-5 shrink-0 place-items-center rounded-full bg-gray-900 text-[10px] font-bold text-white">5</span><p>Admin hanya dapat membantu mengganti ketika status ID lama sudah <strong>Kedaluwarsa</strong>. Owner dapat menggantinya kapan saja.</p></li>
       </ol>
-      <a href="https://developers.soundcloud.com/docs/api/register-app" target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-950">Dokumentasi resmi SoundCloud <ExternalLink size={12} /></a>
-      <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">Jika status berubah menjadi kedaluwarsa atau ditolak, perbarui kredensial di SoundCloud lalu simpan Client ID yang baru.</p>
+      <a href="https://developers.soundcloud.com/docs/api/register-app" target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex items-center gap-1.5 text-xs font-semibold text-gray-700 hover:text-gray-950">Buka panduan resmi SoundCloud <ExternalLink size={12} /></a>
+      <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-xs leading-5 text-amber-800">Client Secret bersifat rahasia dan tidak dibutuhkan oleh kolom ini. Jangan kirim atau simpan Client Secret di dashboard.</p>
     </section>
   </div>;
 }
@@ -55,8 +67,17 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
   const [previewUrl, setPreviewUrl] = useState("");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [now, setNow] = useState(() => initial.checkedAt ? new Date(initial.checkedAt).getTime() : 0);
 
-  function setCheckedStatus(next: string) { setStatus(next); setCheckedAt(new Date().toISOString()); }
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 30000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const canEditClientId = initial.actorRole === "owner" || !configured || status === "expired";
+
+  function setCheckedStatus(next: string) { const checked = new Date().toISOString(); setStatus(next); setCheckedAt(checked); setNow(Date.now()); }
 
   async function saveClientId() {
     if (!clientId.trim()) return;
@@ -64,14 +85,26 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
     try {
       await request("/api/admin/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save-client-id", clientId }) });
       setConfigured(true); setCheckedStatus("valid"); setClientId(""); setMessage("Client ID valid dan tersimpan.");
-    } catch (error) { const text = error instanceof Error ? error.message : "Gagal menyimpan."; setConfigured(true); setCheckedStatus(/kedaluwarsa|ditolak/.test(text) ? "expired" : "error"); setMessage(text); }
+    } catch (error) { setMessage(error instanceof Error ? error.message : "Gagal menyimpan."); }
     finally { setBusy(""); }
   }
 
   async function testClientId() {
     setBusy("test"); setMessage("");
-    try { await request("/api/admin/music?action=test-client-id"); setCheckedStatus("valid"); setMessage("Client ID masih valid."); }
-    catch (error) { setCheckedStatus(error instanceof Error && /kedaluwarsa|ditolak/.test(error.message) ? "expired" : "error"); setMessage(error instanceof Error ? error.message : "Pemeriksaan gagal."); }
+    const candidate = clientId.trim();
+    try {
+      if (candidate) {
+        await request("/api/admin/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test-client-id-candidate", clientId: candidate }) });
+        setMessage("Client ID baru valid dan siap disimpan.");
+      } else {
+        await request("/api/admin/music?action=test-client-id");
+        setCheckedStatus("valid");
+        setMessage("Client ID aktif masih valid.");
+      }
+    } catch (error) {
+      if (!candidate) setCheckedStatus(error instanceof Error && /kedaluwarsa|ditolak/.test(error.message) ? "expired" : "error");
+      setMessage(error instanceof Error ? error.message : "Pemeriksaan gagal.");
+    }
     finally { setBusy(""); }
   }
 
@@ -110,11 +143,21 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
 
   return <div className="space-y-5">
     {showGuide ? <ClientIdGuide onClose={() => setShowGuide(false)} /> : null}
-    <section className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
-      <header className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="font-display text-base font-semibold text-gray-900">SoundCloud Client ID</h2><p className="mt-0.5 text-xs text-gray-500">Dipakai server untuk pencarian. Nilai tersimpan tidak pernah ditampilkan kembali.</p></div><StatusBadge status={status} configured={configured} checkedAt={checkedAt} /></header>
-      {status === "expired" ? <div className="flex items-center justify-between gap-3 border-b border-rose-100 bg-rose-50 px-5 py-3"><p className="text-xs text-rose-700">Client ID ditolak atau kedaluwarsa.</p><button onClick={() => setShowGuide(true)} className="shrink-0 text-xs font-semibold text-rose-700">Cara update</button></div> : null}
-      <div className="px-5 py-4"><div className="relative"><input type={showClientId ? "text" : "password"} value={clientId} onChange={(event) => setClientId(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") void saveClientId(); }} placeholder={configured ? "Isi untuk mengganti client ID" : "Tempel client ID di sini"} className="w-full rounded-xl border border-gray-200 py-2.5 pl-3 pr-10 text-sm outline-none focus:border-gray-400" /><button type="button" onClick={() => setShowClientId((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700" aria-label={showClientId ? "Sembunyikan client ID" : "Tampilkan client ID"}>{showClientId ? <EyeOff size={15} /> : <Eye size={15} />}</button></div>
-        <div className="mt-3 flex flex-wrap items-center gap-2"><button onClick={saveClientId} disabled={!clientId.trim() || busy === "client"} className="inline-flex items-center gap-1.5 rounded-xl bg-gray-900 px-4 py-2 text-xs font-semibold text-white disabled:opacity-40">{busy === "client" ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}Simpan & cek</button>{configured ? <button onClick={testClientId} disabled={busy === "test"} className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-40">{busy === "test" ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />}Cek sekarang</button> : null}<button onClick={() => setShowGuide(true)} className="ml-auto inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-700"><HelpCircle size={13} />Panduan</button></div>
+    <section className="rounded-2xl border border-gray-200 bg-white px-5 py-5 shadow-sm">
+      <div className="flex items-center gap-2"><span className="size-2.5 rounded-full bg-orange-500" aria-hidden="true" /><h2 className="font-display text-base font-semibold text-gray-900">SoundCloud Client ID</h2></div>
+      <p className="mt-1 text-xs text-gray-500">Dipakai server untuk pencarian. Nilai yang sudah tersimpan tidak pernah ditampilkan kembali.</p>
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <input disabled={!canEditClientId} type={showClientId ? "text" : "password"} value={clientId} onChange={(event) => setClientId(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && canEditClientId) void saveClientId(); }} placeholder={configured ? "••••••••••••••••••••" : "Tempel Client ID di sini"} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400" />
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setShowClientId((value) => !value)} disabled={!canEditClientId || !clientId} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">{showClientId ? <EyeOff size={14} /> : <Eye size={14} />}{showClientId ? "Hide" : "Show"}</button>
+          <button type="button" onClick={testClientId} disabled={(!configured && !clientId.trim()) || busy === "test"} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">{busy === "test" ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}Test</button>
+        </div>
+      </div>
+      <div className="mt-3"><StatusLine status={status} configured={configured} checkedAt={checkedAt} now={now} /></div>
+      {!canEditClientId ? <p className="mt-2 text-xs leading-5 text-gray-400">Client ID masih aktif. Admin hanya dapat menggantinya setelah status terdeteksi kedaluwarsa.</p> : null}
+      <button type="button" onClick={saveClientId} disabled={!canEditClientId || !clientId.trim() || busy === "client"} className="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-gray-900 px-4 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{busy === "client" ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}Save</button>
+      <div className="mt-5 border-t border-gray-100 pt-4">
+        <button type="button" onClick={() => setShowGuide(true)} className="inline-flex items-center gap-1.5 text-xs font-semibold text-amber-700 hover:text-amber-900"><HelpCircle size={14} />Kedaluwarsa? <ArrowRight size={12} /> Panduan Ambil Client ID</button>
       </div>
     </section>
 
