@@ -1,7 +1,7 @@
 import "server-only";
 import type { SoundCloudTrackResult } from "@/types";
 
-const API_ROOT = "https://api.soundcloud.com";
+const API_ROOT = "https://api-v2.soundcloud.com";
 const OEMBED_URL = "https://soundcloud.com/oembed";
 const BROWSER_HEADERS = {
   "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
@@ -49,20 +49,15 @@ async function getJson(url: string) {
 
 export function isSoundCloudAuthError(error: unknown) {
   return error instanceof Error && "status" in error && (error as Error & { status?: number }).status !== undefined
-    && (error as Error & { status: number }).status === 401;
-}
-
-export function isSoundCloudOAuthRequired(error: unknown) {
-  return error instanceof Error && "status" in error
-    && (error as Error & { status?: number }).status === 403;
+    && [401, 403].includes((error as Error & { status: number }).status);
 }
 
 export async function testSoundCloudClientId(clientId: string): Promise<void> {
-  await getJson(`${API_ROOT}/tracks?limit=1&client_id=${encodeURIComponent(clientId)}`);
+  await getJson(`${API_ROOT}/search/tracks?q=test&limit=1&client_id=${encodeURIComponent(clientId)}`);
 }
 
 export async function searchSoundCloud(query: string, clientId: string): Promise<SoundCloudTrackResult[]> {
-  const json = await getJson(`${API_ROOT}/tracks?q=${encodeURIComponent(query)}&limit=12&client_id=${encodeURIComponent(clientId)}`);
+  const json = await getJson(`${API_ROOT}/search/tracks?q=${encodeURIComponent(query)}&limit=12&client_id=${encodeURIComponent(clientId)}`);
   const rows = Array.isArray(json) ? json : json && typeof json === "object" && Array.isArray((json as { collection?: unknown }).collection) ? (json as { collection: unknown[] }).collection : [];
   return rows.map((row) => row && typeof row === "object" ? fromApiTrack(row as Record<string, unknown>) : null).filter((row): row is SoundCloudTrackResult => Boolean(row));
 }
