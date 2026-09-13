@@ -153,6 +153,9 @@ function parsePage(items: PdfTextItem[], pageNumber: number): ParsedScheduleClas
 }
 
 export async function parseSchedulePdf(data: Uint8Array): Promise<ParsedScheduleClass[]> {
+  // Next.js bundles PDF.js away from its worker file. Loading the worker module
+  // first registers WorkerMessageHandler on globalThis for PDF.js' Node fallback.
+  await import("pdfjs-dist/legacy/build/pdf.worker.mjs");
   const { getDocument } = await import("pdfjs-dist/legacy/build/pdf.mjs");
   const loadingTask = getDocument({ data, useSystemFonts: true });
   const document = await loadingTask.promise;
