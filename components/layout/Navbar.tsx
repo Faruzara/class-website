@@ -20,6 +20,9 @@ const NAV_LINKS = [
 
 const SCROLL_TICK_COUNT = 56;
 const SCROLL_MAJOR_EVERY = 5;
+const DOCK_ICON_CLASS = "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10";
+const DOCK_ICON_IDLE = "text-gray-500 hover:bg-white hover:text-gray-900";
+const DOCK_TOOLTIP_CLASS = "pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100";
 
 export default function Navbar({ announcements = [], musicTracks = [] }: { announcements?: Pengumuman[]; musicTracks?: MusicTrack[] }) {
   const pathname = usePathname();
@@ -378,24 +381,24 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
                   aria-label={label}
                   aria-current={active ? "page" : undefined}
                   className={clsx(
-                    "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
-                    active ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+                    DOCK_ICON_CLASS,
+                    active ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE
                   )}
                 >
-                  <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">{label}</span>
+                  <span className={DOCK_TOOLTIP_CLASS}>{label}</span>
                   <Icon size={18} strokeWidth={active ? 2 : 1.7} className={clsx("transition-transform group-hover:scale-110 group-active:scale-110", active && "scale-110")} aria-hidden="true" />
                 </Link>
               );
             })}
 
-            <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
-              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Pengumuman</span>
+            <button type="button" onClick={() => togglePanel("announcements")} aria-label="Pengumuman" aria-expanded={activePanel === "announcements"} className={clsx(DOCK_ICON_CLASS, activePanel === "announcements" ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE)}>
+              <span className={DOCK_TOOLTIP_CLASS}>Pengumuman</span>
               <Bell size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
               {unread ? <span className="absolute right-2 top-2 size-1.5 rounded-full bg-brand-500 ring-2 ring-white" aria-label="Ada pengumuman baru" /> : null}
             </button>
 
-            <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx("group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10", activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900")}>
-              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Feedback</span>
+            <button type="button" onClick={() => togglePanel("feedback")} aria-label="Feedback" aria-expanded={activePanel === "feedback"} className={clsx(DOCK_ICON_CLASS, activePanel === "feedback" ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE)}>
+              <span className={DOCK_TOOLTIP_CLASS}>Feedback</span>
               <MessageSquareText size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
 
@@ -403,10 +406,10 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
               type="button"
               onClick={() => { setActivePanel(null); setDockPage(2); }}
               aria-label="Buka menu 2"
-              className="group relative grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-[background-color,color,box-shadow] hover:bg-white hover:text-gray-900 min-[360px]:size-10"
+              className={clsx(DOCK_ICON_CLASS, DOCK_ICON_IDLE)}
             >
-              <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Menu 2</span>
-              <Ellipsis size={19} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              <span className={DOCK_TOOLTIP_CLASS}>Menu 2</span>
+              <Ellipsis size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
           </div>
 
@@ -418,27 +421,33 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
               dockPage === 2 ? "translate-x-0 opacity-100" : "pointer-events-none absolute translate-x-3 opacity-0"
             )}
           >
+            {showCreator ? (
+              <a href={creatorUrl || "#"} target="_blank" rel="noopener noreferrer" onClick={(event) => { if (!creatorUrl) event.preventDefault(); }} aria-label="GitHub pembuat situs" className="group relative grid h-11 min-w-12 place-items-center rounded-xl bg-white text-gray-900 shadow-sm animate-in fade-in zoom-in"><Github size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" /></a>
+            ) : (
+              <Link href="/" aria-label="XI TP2 — Beranda" className="grid h-11 min-w-12 place-items-center rounded-xl px-2 font-display text-[11px] font-bold tracking-wide text-gray-900 transition-colors hover:bg-white">XI TP2</Link>
+            )}
+            <span aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 bg-gray-900/10" />
             <button
               type="button"
               onClick={() => togglePanel("music")}
               aria-label="Musik"
               aria-expanded={activePanel === "music"}
               className={clsx(
-                "group relative grid size-9 shrink-0 place-items-center rounded-xl transition-[background-color,color,box-shadow] min-[360px]:size-10",
-                activePanel === "music" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white hover:text-gray-900"
+                DOCK_ICON_CLASS,
+                activePanel === "music" ? "bg-white text-gray-900 shadow-sm" : DOCK_ICON_IDLE
               )}
             >
-              <span className="pointer-events-none absolute -top-9 rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Musik</span>
+              <span className={DOCK_TOOLTIP_CLASS}>Musik</span>
               <Music2 size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
             <button
               type="button"
               onClick={() => { setActivePanel(null); setDockPage(1); }}
               aria-label="Kembali ke menu utama"
-              className="group relative grid size-9 shrink-0 place-items-center rounded-xl text-gray-500 transition-[background-color,color,box-shadow] hover:bg-white hover:text-gray-900 min-[360px]:size-10"
+              className={clsx(DOCK_ICON_CLASS, DOCK_ICON_IDLE)}
             >
-              <span className="pointer-events-none absolute -top-9 whitespace-nowrap rounded-lg bg-white/90 px-2 py-1 text-[10px] font-medium text-gray-700 opacity-0 shadow-sm backdrop-blur-md transition-[opacity,transform] group-hover:-translate-y-0.5 group-hover:opacity-100 group-focus-visible:-translate-y-0.5 group-focus-visible:opacity-100">Kembali</span>
-              <ArrowLeft size={18} strokeWidth={1.8} className="transition-transform group-hover:scale-110 group-active:scale-110" />
+              <span className={DOCK_TOOLTIP_CLASS}>Kembali</span>
+              <ArrowLeft size={18} strokeWidth={1.7} className="transition-transform group-hover:scale-110 group-active:scale-110" />
             </button>
           </div>
         </nav>

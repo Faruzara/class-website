@@ -3,6 +3,13 @@ import type { SoundCloudTrackResult } from "@/types";
 
 const API_ROOT = "https://api.soundcloud.com";
 const OEMBED_URL = "https://soundcloud.com/oembed";
+const BROWSER_HEADERS = {
+  "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+  Accept: "application/json, text/plain, */*",
+  "Accept-Language": "en-US,en;q=0.9",
+  Origin: "https://soundcloud.com",
+  Referer: "https://soundcloud.com/",
+};
 
 function safeSoundCloudUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
@@ -27,7 +34,11 @@ function fromApiTrack(row: Record<string, unknown>): SoundCloudTrackResult | nul
 }
 
 async function getJson(url: string) {
-  const response = await fetch(url, { signal: AbortSignal.timeout(10_000), cache: "no-store" });
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(10_000),
+    cache: "no-store",
+    headers: BROWSER_HEADERS,
+  });
   if (!response.ok) {
     const error = new Error(`SoundCloud ${response.status}`) as Error & { status?: number };
     error.status = response.status;
