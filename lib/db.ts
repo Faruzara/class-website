@@ -157,6 +157,18 @@ export async function createJadwalItem(item: Omit<JadwalItem, "id">): Promise<vo
   if (error) throw error;
 }
 
+export async function updateJadwalItem(id: string, item: Omit<JadwalItem, "id">): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from("jadwal")
+    .update(item)
+    .eq("id", id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) throw error;
+  return Boolean(data);
+}
+
 export async function deleteJadwalItem(id: string): Promise<void> {
   const { error } = await supabaseAdmin.from("jadwal").delete().eq("id", id);
 

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { useRef, useState, useTransition } from "react";
+import { Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import type { JadwalItem } from "@/types";
 import { getActiveScheduleWeek, offsetForScheduleWeek, type ScheduleWeek } from "@/lib/schedule-week";
 
@@ -13,8 +13,10 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
   const [weekOffset, setWeekOffset] = useState(initialWeekOffset === 1 ? 1 : 0);
   const [switchingWeek, setSwitchingWeek] = useState(false);
   const [form, setForm] = useState({ subject: "", day: "Senin", week: 1, room: "", start_period: 1, end_period: 2 });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
 
   function refresh() {
     return fetch("/api/admin/jadwal").then((response) => response.json()).then((result) => {
@@ -26,19 +28,36 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
     event.preventDefault();
     setError(null);
     startTransition(async () => {
-      const response = await fetch("/api/admin/jadwal", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      const response = await fetch(editingId ? `/api/admin/jadwal/${editingId}` : "/api/admin/jadwal", { method: editingId ? "PATCH" : "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
       const result = await response.json();
-      if (!result.success) return setError(result.error ?? "Gagal menambah jadwal");
-      setForm((current) => ({ ...current, subject: "", room: "" }));
+      if (!response.ok || !result.success) return setError(result.error ?? (editingId ? "Gagal mengubah jadwal" : "Gagal menambah jadwal"));
+      setEditingId(null);
+      setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2 });
       await refresh();
     });
+  }
+
+  function edit(item: JadwalItem) {
+    setEditingId(item.id);
+    setError(null);
+    setForm({ subject: item.subject, day: item.day, week: item.week, room: item.room ?? "", start_period: item.start_period, end_period: item.end_period });
+    window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+    setError(null);
+    setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2 });
   }
 
   function remove(id: string) {
     startTransition(async () => {
       const response = await fetch(`/api/admin/jadwal/${id}`, { method: "DELETE" });
       const result = await response.json();
-      if (result.success) setItems((current) => current.filter((item) => item.id !== id));
+      if (result.success) {
+        setItems((current) => current.filter((item) => item.id !== id));
+        if (editingId === id) cancelEdit();
+      }
     });
   }
 
@@ -74,7 +93,11 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
           </div>
         </div>
       </section>
-      <form onSubmit={submit} className="card grid gap-4 sm:grid-cols-2">
+      <form ref={formRef} onSubmit={submit} className="card grid scroll-mt-6 gap-4 sm:grid-cols-2">
+        <div className="flex items-center justify-between gap-4 sm:col-span-2">
+          <h2 className="text-sm font-semibold text-gray-900">{editingId ? "Edit jadwal" : "Tambah jadwal"}</h2>
+          {editingId ? <button type="button" onClick={cancelEdit} className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-900"><X size={14} /> Batal</button> : null}
+        </div>
         <div className="sm:col-span-2">
           <label className="mb-1.5 block text-sm text-gray-600">Mata pelajaran</label>
           <input className="input" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required />
@@ -108,7 +131,7 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
         </div>
         {error && <p className="text-sm text-rose-600 sm:col-span-2">{error}</p>}
         <button className="btn-primary inline-flex items-center justify-center gap-2 sm:col-span-2 sm:justify-self-start" disabled={pending}>
-          {pending ? <Loader2 size={16} className="animate-spin" /> : <Plus size={16} />} Tambah Jadwal
+          {pending ? <Loader2 size={16} className="animate-spin" /> : editingId ? <Save size={16} /> : <Plus size={16} />} {editingId ? "Simpan Perubahan" : "Tambah Jadwal"}
         </button>
       </form>
 
@@ -125,7 +148,10 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
                   <p className="truncate text-sm font-medium text-gray-900">{item.subject}</p>
                   <p className="text-xs text-gray-500">Jam ke-{item.start_period}–{item.end_period}{item.room ? ` · ${item.room}` : ""}</p>
                 </div>
-                <button type="button" onClick={() => remove(item.id)} className="p-2 text-gray-400 hover:text-rose-600" aria-label={`Hapus ${item.subject}`}><Trash2 size={16} /></button>
+                <div className="flex shrink-0 items-center">
+                  <button type="button" onClick={() => edit(item)} className="p-2 text-gray-400 hover:text-brand-700" aria-label={`Edit ${item.subject}`}><Pencil size={16} /></button>
+                  <button type="button" onClick={() => remove(item.id)} className="p-2 text-gray-400 hover:text-rose-600" aria-label={`Hapus ${item.subject}`}><Trash2 size={16} /></button>
+                </div>
               </div>
             ))}
           </div>

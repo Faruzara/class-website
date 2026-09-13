@@ -10,6 +10,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "schedule:import:dry": "node scripts/import-xi-tp2-schedule.cjs",
+    "schedule:import": "node scripts/import-xi-tp2-schedule.cjs --apply",
     "media:migrate:dry": "node scripts/migrate-public-media-to-cloudinary.cjs",
     "media:migrate": "node scripts/migrate-public-media-to-cloudinary.cjs --apply"
   },

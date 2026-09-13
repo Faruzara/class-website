@@ -86,6 +86,15 @@ Admin mengelola jadwal, anggota, galeri, pengumuman, dan Moments sesuai hak akse
 
 Jadwal menggunakan dua set data: Week 1 dan Week 2. Minggu aktif dapat mengikuti pengaturan otomatis atau dipindahkan manual dari dashboard Admin ketika jadwal aktual tidak sesuai.
 
+Jadwal XI TP2 tahun pelajaran 2026/2027 yang sudah diekstrak dari PDF dapat diperiksa dan diimpor tanpa duplikasi:
+
+```bash
+npm run schedule:import:dry
+npm run schedule:import
+```
+
+Import melakukan merge berdasarkan hari, minggu, jam mulai, dan mata pelajaran. Proses dibatalkan jika ditemukan entri lain yang bertabrakan.
+
 ## Media dan folder environment
 
 Migrasi media publik ke Cloudinary tersedia dalam mode dry-run:
