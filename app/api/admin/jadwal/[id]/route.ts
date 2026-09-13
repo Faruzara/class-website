@@ -3,6 +3,7 @@ import { getEditorSession, logActivity } from "@/lib/auth";
 import { deleteJadwalItem, updateJadwalItem } from "@/lib/db";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { ApiResponse, JadwalItem } from "@/types";
+import { isScheduleColor } from "@/components/schedule/schedule-colors";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
@@ -19,6 +20,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     room: String(body.room ?? "").trim() || null,
     start_period: Number(body.start_period),
     end_period: Number(body.end_period),
+    color_override: body.color_override == null || body.color_override === "" ? null : body.color_override,
   } as Omit<JadwalItem, "id">;
 
   if (
@@ -30,6 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     || item.start_period < 1
     || item.end_period > 11
     || item.end_period < item.start_period
+    || (item.color_override !== null && !isScheduleColor(item.color_override))
   ) {
     return NextResponse.json<ApiResponse>({ success: false, error: "Data jadwal tidak valid" }, { status: 400 });
   }
@@ -47,7 +50,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json<ApiResponse>({ success: false, error: "Jam pelajaran tersebut bertabrakan dengan jadwal lain" }, { status: 409 });
   }
 
-  const updated = await updateJadwalItem(id, item);
+  let updated: boolean;
+  try {
+    updated = await updateJadwalItem(id, item);
+  } catch (error) {
+    const missingColorColumn = error && typeof error === "object" && "code" in error && error.code === "PGRST204";
+    return NextResponse.json<ApiResponse>({ success: false, error: missingColorColumn ? "Jalankan supabase-migration-schedule-color.sql terlebih dahulu." : "Gagal mengubah jadwal" }, { status: 500 });
+  }
   if (!updated) return NextResponse.json<ApiResponse>({ success: false, error: "Jadwal tidak ditemukan" }, { status: 404 });
   await logActivity({ actor_role: session.role, actor_label: session.label, action: "schedule_changed", detail: `Edit ${item.subject} · ${item.day} · Week ${item.week}` });
   return NextResponse.json<ApiResponse>({ success: true });

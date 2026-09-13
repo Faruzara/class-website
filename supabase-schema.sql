@@ -110,6 +110,10 @@ CREATE TABLE IF NOT EXISTS jadwal (
   room           TEXT,
   start_period   SMALLINT NOT NULL CHECK (start_period > 0),
   end_period     SMALLINT NOT NULL CHECK (end_period >= start_period),
+  color_override TEXT CHECK (color_override IS NULL OR color_override IN (
+    'blue', 'lime', 'cyan', 'gray', 'sky', 'amber',
+    'pink', 'purple', 'green', 'emerald', 'aqua', 'orange'
+  )),
   UNIQUE (day, week, start_period, subject)
 );
 

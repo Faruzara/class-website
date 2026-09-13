@@ -106,6 +106,8 @@ export interface FeedbackSubmission {
 }
 
 // -- Jadwal pelajaran --
+export type ScheduleColor = "blue" | "lime" | "cyan" | "gray" | "sky" | "amber" | "pink" | "purple" | "green" | "emerald" | "aqua" | "orange";
+
 export interface JadwalItem {
   id: string;
   subject: string;
@@ -114,6 +116,7 @@ export interface JadwalItem {
   room: string | null;
   start_period: number;
   end_period: number;
+  color_override?: ScheduleColor | null;
 }
 
 export type ScheduleImportItem = Omit<JadwalItem, "id">;

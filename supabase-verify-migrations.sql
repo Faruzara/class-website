@@ -165,6 +165,10 @@ WITH checks(sequence, migration_file, requirement, installed) AS (
       SELECT 1 FROM pg_policies
       WHERE schemaname = 'storage' AND tablename = 'objects'
         AND policyname = 'project media server only'
+    )),
+
+    (15, 'supabase-migration-schedule-color.sql', 'jadwal.color_override', EXISTS (
+      SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'jadwal' AND column_name = 'color_override'
     ))
 ), summary AS (
   SELECT

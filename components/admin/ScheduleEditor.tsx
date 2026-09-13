@@ -2,18 +2,28 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
-import type { JadwalItem } from "@/types";
+import type { JadwalItem, ScheduleColor } from "@/types";
 import { getActiveScheduleWeek, offsetForScheduleWeek, type ScheduleWeek } from "@/lib/schedule-week";
 import SchedulePdfImport from "@/components/admin/SchedulePdfImport";
+import { SCHEDULE_COLOR_OPTIONS, scheduleColorTone } from "@/components/schedule/schedule-colors";
 
-const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
 const SCHOOL_PERIODS = Array.from({ length: 11 }, (_, index) => index + 1);
+type ScheduleForm = {
+  subject: string;
+  day: JadwalItem["day"];
+  week: 1 | 2;
+  room: string;
+  start_period: number;
+  end_period: number;
+  color_override: ScheduleColor | null;
+};
 
 export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: { initialItems: JadwalItem[]; initialWeekOffset?: number }) {
   const [items, setItems] = useState(initialItems);
   const [weekOffset, setWeekOffset] = useState(initialWeekOffset === 1 ? 1 : 0);
   const [switchingWeek, setSwitchingWeek] = useState(false);
-  const [form, setForm] = useState({ subject: "", day: "Senin", week: 1, room: "", start_period: 1, end_period: 2 });
+  const [form, setForm] = useState<ScheduleForm>({ subject: "", day: "Senin", week: 1, room: "", start_period: 1, end_period: 2, color_override: null });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -33,7 +43,7 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
       const result = await response.json();
       if (!response.ok || !result.success) return setError(result.error ?? (editingId ? "Gagal mengubah jadwal" : "Gagal menambah jadwal"));
       setEditingId(null);
-      setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2 });
+      setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2, color_override: null });
       await refresh();
     });
   }
@@ -41,14 +51,14 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
   function edit(item: JadwalItem) {
     setEditingId(item.id);
     setError(null);
-    setForm({ subject: item.subject, day: item.day, week: item.week, room: item.room ?? "", start_period: item.start_period, end_period: item.end_period });
+    setForm({ subject: item.subject, day: item.day, week: item.week, room: item.room ?? "", start_period: item.start_period, end_period: item.end_period, color_override: item.color_override ?? null });
     window.requestAnimationFrame(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }));
   }
 
   function cancelEdit() {
     setEditingId(null);
     setError(null);
-    setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2 });
+    setForm({ subject: "", day: form.day, week: form.week, room: "", start_period: 1, end_period: 2, color_override: null });
   }
 
   function remove(id: string) {
@@ -105,12 +115,12 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
           <input className="input" value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} required />
         </div>
         <Field label="Hari">
-          <select className="input" value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value })}>
+          <select className="input" value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value as JadwalItem["day"] })}>
             {DAYS.map((day) => <option key={day}>{day}</option>)}
           </select>
         </Field>
         <Field label="Minggu">
-          <select className="input" value={form.week} onChange={(e) => setForm({ ...form, week: Number(e.target.value) })}>
+          <select className="input" value={form.week} onChange={(e) => setForm({ ...form, week: Number(e.target.value) as 1 | 2 })}>
             <option value={1}>Week 1</option><option value={2}>Week 2</option>
           </select>
         </Field>
@@ -127,10 +137,22 @@ export default function ScheduleEditor({ initialItems, initialWeekOffset = 0 }: 
             {SCHOOL_PERIODS.filter((period) => period >= form.start_period).map((period) => <option key={period} value={period}>{period}</option>)}
           </select>
         </Field>
-        <div className="sm:col-span-2">
+        <div>
           <label className="mb-1.5 block text-sm text-gray-600">Ruangan</label>
           <input className="input" value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} placeholder="P15 - LAB CNC" />
         </div>
+        <Field label="Warna kartu">
+          <div className="relative">
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 rounded-md border ${form.color_override ? scheduleColorTone(form.color_override) : "border-gray-300 bg-gradient-to-br from-blue-100 via-emerald-100 to-pink-100"}`}
+            />
+            <select className="input pl-12" value={form.color_override ?? ""} onChange={(e) => setForm({ ...form, color_override: (e.target.value || null) as ScheduleColor | null })}>
+              <option value="">Otomatis</option>
+              {SCHEDULE_COLOR_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+            </select>
+          </div>
+        </Field>
         {error && <p className="text-sm text-rose-600 sm:col-span-2">{error}</p>}
         <button className="btn-primary inline-flex items-center justify-center gap-2 sm:col-span-2 sm:justify-self-start" disabled={pending}>
           {pending ? <Loader2 size={16} className="animate-spin" /> : editingId ? <Save size={16} /> : <Plus size={16} />} {editingId ? "Simpan Perubahan" : "Tambah Jadwal"}

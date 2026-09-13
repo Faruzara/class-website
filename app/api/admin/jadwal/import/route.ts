@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEditorSession, logActivity } from "@/lib/auth";
 import { supabaseAdmin } from "@/lib/supabase";
+import { getJadwal } from "@/lib/db";
 import type { ApiResponse, JadwalItem, ScheduleImportItem } from "@/types";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"] as const;
@@ -70,11 +71,12 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const { data: currentData, error: readError } = await supabaseAdmin
-    .from("jadwal")
-    .select("id,subject,day,week,room,start_period,end_period");
-  if (readError) return NextResponse.json<ApiResponse>({ success: false, error: "Gagal membaca jadwal saat ini" }, { status: 500 });
-  const current = (currentData ?? []) as JadwalItem[];
+  let current: JadwalItem[];
+  try {
+    current = await getJadwal();
+  } catch {
+    return NextResponse.json<ApiResponse>({ success: false, error: "Gagal membaca jadwal saat ini" }, { status: 500 });
+  }
 
   if (mode === "replace") {
     const { error: deleteError } = await supabaseAdmin.from("jadwal").delete().not("id", "is", null);

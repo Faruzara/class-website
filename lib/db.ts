@@ -138,15 +138,24 @@ export async function updateFeedbackStatus(id: string, status: FeedbackStatus): 
 const URUTAN_HARI = ["Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"];
 
 export async function getJadwal(): Promise<JadwalItem[]> {
-  const { data, error } = await supabase
+  const withColor = await supabase
+    .from("jadwal")
+    .select("id, subject, day, week, room, start_period, end_period, color_override")
+    .not("subject", "is", null)
+    .order("week", { ascending: true })
+    .order("start_period", { ascending: true });
+
+  if (!withColor.error) return (withColor.data ?? []) as JadwalItem[];
+  if (!isMissingSupabaseColumn(withColor.error, "color_override")) throw withColor.error;
+
+  const legacy = await supabase
     .from("jadwal")
     .select("id, subject, day, week, room, start_period, end_period")
     .not("subject", "is", null)
     .order("week", { ascending: true })
     .order("start_period", { ascending: true });
-
-  if (error) throw error;
-  return (data ?? []) as JadwalItem[];
+  if (legacy.error) throw legacy.error;
+  return (legacy.data ?? []).map((item) => ({ ...item, color_override: null })) as JadwalItem[];
 }
 
 export async function createJadwalItem(item: Omit<JadwalItem, "id">): Promise<void> {
@@ -154,19 +163,27 @@ export async function createJadwalItem(item: Omit<JadwalItem, "id">): Promise<vo
     .from("jadwal")
     .insert(item);
 
-  if (error) throw error;
+  if (!error) return;
+  if (!isMissingSupabaseColumn(error, "color_override") || item.color_override) throw error;
+  const { color_override: _color, ...legacyItem } = item;
+  const { error: legacyError } = await supabaseAdmin.from("jadwal").insert(legacyItem);
+  if (legacyError) throw legacyError;
 }
 
 export async function updateJadwalItem(id: string, item: Omit<JadwalItem, "id">): Promise<boolean> {
-  const { data, error } = await supabaseAdmin
+  const result = await supabaseAdmin
     .from("jadwal")
     .update(item)
     .eq("id", id)
     .select("id")
     .maybeSingle();
 
-  if (error) throw error;
-  return Boolean(data);
+  if (!result.error) return Boolean(result.data);
+  if (!isMissingSupabaseColumn(result.error, "color_override") || item.color_override) throw result.error;
+  const { color_override: _color, ...legacyItem } = item;
+  const legacy = await supabaseAdmin.from("jadwal").update(legacyItem).eq("id", id).select("id").maybeSingle();
+  if (legacy.error) throw legacy.error;
+  return Boolean(legacy.data);
 }
 
 export async function deleteJadwalItem(id: string): Promise<void> {
