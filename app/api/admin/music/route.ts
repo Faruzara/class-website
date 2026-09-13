@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getEditorSession, logActivity } from "@/lib/auth";
 import { createMusicTrack, getMusicSettings, getMusicTracks, updateMusicSettings } from "@/lib/db";
-import { isSoundCloudAuthError, resolveSoundCloudTrack, searchSoundCloud, testSoundCloudClientId } from "@/lib/soundcloud";
+import { isSoundCloudAuthError, isSoundCloudOAuthRequired, resolveSoundCloudTrack, searchSoundCloud, testSoundCloudClientId } from "@/lib/soundcloud";
 import type { ApiResponse, MusicTrack, SoundCloudTrackResult } from "@/types";
 
 async function authorized() {
@@ -23,8 +23,9 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ success: true, data: { status: "valid" } });
       } catch (error) {
         const expired = isSoundCloudAuthError(error);
+        const oauthRequired = isSoundCloudOAuthRequired(error);
         await updateMusicSettings({ soundcloud_client_id_status: expired ? "expired" : "error", soundcloud_client_id_checked_at: new Date().toISOString() });
-        return NextResponse.json<ApiResponse>({ success: false, error: expired ? "Client ID ditolak atau sudah kedaluwarsa." : "SoundCloud sedang tidak dapat dihubungi." }, { status: expired ? 401 : 502 });
+        return NextResponse.json<ApiResponse>({ success: false, error: expired ? "Client ID ditolak atau sudah kedaluwarsa." : oauthRequired ? "Client ID tersimpan, tetapi pencarian SoundCloud sekarang memerlukan OAuth access token." : "SoundCloud sedang tidak dapat dihubungi." }, { status: expired ? 401 : oauthRequired ? 403 : 502 });
       }
     }
     if (!query) {
@@ -39,8 +40,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json<ApiResponse<SoundCloudTrackResult[]>>({ success: true, data: results });
     } catch (error) {
       const expired = isSoundCloudAuthError(error);
+      const oauthRequired = isSoundCloudOAuthRequired(error);
       await updateMusicSettings({ soundcloud_client_id_status: expired ? "expired" : "error", soundcloud_client_id_checked_at: new Date().toISOString() });
-      return NextResponse.json<ApiResponse>({ success: false, error: expired ? "Client ID ditolak atau sudah kedaluwarsa. Ganti melalui pengaturan musik." : "SoundCloud sedang tidak dapat dihubungi." }, { status: expired ? 401 : 502 });
+      return NextResponse.json<ApiResponse>({ success: false, error: expired ? "Client ID ditolak atau sudah kedaluwarsa. Ganti melalui pengaturan musik." : oauthRequired ? "Pencarian SoundCloud memerlukan OAuth access token; penambahan lewat link tetap dapat digunakan." : "SoundCloud sedang tidak dapat dihubungi." }, { status: expired ? 401 : oauthRequired ? 403 : 502 });
     }
   } catch (error) {
     console.error("[GET /api/admin/music]", error);
@@ -61,9 +63,10 @@ export async function POST(req: NextRequest) {
         await updateMusicSettings({ soundcloud_client_id: clientId, soundcloud_client_id_status: "valid", soundcloud_client_id_checked_at: new Date().toISOString() });
         return NextResponse.json({ success: true, data: { status: "valid" } });
       } catch (error) {
+        const oauthRequired = isSoundCloudOAuthRequired(error);
         const status = isSoundCloudAuthError(error) ? "expired" : "error";
         await updateMusicSettings({ soundcloud_client_id: clientId, soundcloud_client_id_status: status, soundcloud_client_id_checked_at: new Date().toISOString() });
-        return NextResponse.json<ApiResponse>({ success: false, error: status === "expired" ? "Client ID ditolak atau sudah kedaluwarsa." : "Client ID tersimpan, tetapi belum dapat diverifikasi." }, { status: status === "expired" ? 400 : 502 });
+        return NextResponse.json<ApiResponse>({ success: false, error: status === "expired" ? "Client ID ditolak atau sudah kedaluwarsa." : oauthRequired ? "Client ID tersimpan, tetapi pencarian SoundCloud sekarang memerlukan OAuth access token." : "Client ID tersimpan, tetapi belum dapat diverifikasi." }, { status: status === "expired" ? 400 : oauthRequired ? 403 : 502 });
       }
     }
     const metadata = await resolveSoundCloudTrack(body.track?.soundcloud_url ?? body.url);
@@ -74,6 +77,7 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("[POST /api/admin/music]", error);
     const duplicate = error && typeof error === "object" && "code" in error && error.code === "23505";
-    return NextResponse.json<ApiResponse>({ success: false, error: duplicate ? "Lagu ini sudah ada di playlist." : error instanceof Error && error.message.includes("URL SoundCloud") ? error.message : "Gagal menambahkan musik." }, { status: duplicate ? 409 : 500 });
+    const missingTable = error && typeof error === "object" && "code" in error && error.code === "42P01";
+    return NextResponse.json<ApiResponse>({ success: false, error: duplicate ? "Lagu ini sudah ada di playlist." : missingTable ? "Tabel playlist belum tersedia. Jalankan migrasi musik terlebih dahulu." : error instanceof Error && error.message.includes("URL SoundCloud") ? error.message : error instanceof Error && error.message.startsWith("SoundCloud ") ? `Link tidak dapat dibaca (${error.message}). Pastikan link menuju satu lagu publik.` : "Gagal menambahkan musik." }, { status: duplicate ? 409 : 500 });
   }
 }

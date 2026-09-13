@@ -349,7 +349,9 @@ export async function updateSiteSettings(payload: Partial<SiteSettings>): Promis
 // MUSIC PLAYLIST
 // ============================================
 export async function getPublicMusicTracks(): Promise<MusicTrack[]> {
-  const { data, error } = await supabase.from("music_tracks").select("*").eq("is_active", true).order("position").order("created_at");
+  // Dibaca di Server Component melalui service role. Browser tetap tidak diberi
+  // akses tabel langsung, dan hanya lagu aktif yang pernah diteruskan ke publik.
+  const { data, error } = await supabaseAdmin.from("music_tracks").select("*").eq("is_active", true).order("position").order("created_at");
   if (error) {
     if (isMissingSupabaseRelation(error, "music_tracks")) return [];
     throw error;

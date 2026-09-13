@@ -49,7 +49,12 @@ async function getJson(url: string) {
 
 export function isSoundCloudAuthError(error: unknown) {
   return error instanceof Error && "status" in error && (error as Error & { status?: number }).status !== undefined
-    && [401, 403].includes((error as Error & { status: number }).status);
+    && (error as Error & { status: number }).status === 401;
+}
+
+export function isSoundCloudOAuthRequired(error: unknown) {
+  return error instanceof Error && "status" in error
+    && (error as Error & { status?: number }).status === 403;
 }
 
 export async function testSoundCloudClientId(clientId: string): Promise<void> {
