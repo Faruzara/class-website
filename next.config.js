@@ -2,12 +2,13 @@ const isProduction = process.env.NODE_ENV === "production";
 
 const contentSecurityPolicy = [
   "default-src 'self'",
-  `script-src 'self' 'unsafe-inline'${isProduction ? "" : " 'unsafe-eval'"}`,
+  `script-src 'self' 'unsafe-inline' https://w.soundcloud.com${isProduction ? "" : " 'unsafe-eval'"}`,
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https://*.supabase.co https://res.cloudinary.com",
+  "img-src 'self' data: blob: https://*.supabase.co https://res.cloudinary.com https://*.sndcdn.com",
   "media-src 'self' blob:",
   "connect-src 'self' https://*.supabase.co",
+  "frame-src 'self' https://w.soundcloud.com",
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
