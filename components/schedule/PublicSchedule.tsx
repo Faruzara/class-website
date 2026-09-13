@@ -6,19 +6,36 @@ import type { ScheduleWeek } from "@/lib/schedule-week";
 
 const DAYS = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
 
-const SUBJECT_TONES = [
+const SUBJECT_TONE_RULES = [
+  { keys: ["sejarah"], tone: "border-[#a9c9e7] bg-[#e4f0fa]" },
+  { keys: ["bjpg", "bahasajepang"], tone: "border-[#b8dda9] bg-[#e6f5df]" },
+  { keys: ["bindo", "bahasaindonesia"], tone: "border-[#a9dcea] bg-[#def3f8]" },
+  { keys: ["mtk", "matematika"], tone: "border-[#cfcfcf] bg-[#eeeeee]" },
+  { keys: ["pai", "pendidikanagamaislam"], tone: "border-[#add8ea] bg-[#e2f3f9]" },
+  { keys: ["bing", "bahasainggris"], tone: "border-[#d8c19f] bg-[#f3e8d8]" },
+  { keys: ["bjawa", "bahasajawa"], tone: "border-[#e9bfc1] bg-[#fae8e9]" },
+  { keys: ["tp2", "teknikpemesinan"], tone: "border-[#d4b9e9] bg-[#eee1f8]" },
+  { keys: ["kik"], tone: "border-[#acd3ad] bg-[#def0df]" },
+  { keys: ["gtk"], tone: "border-[#b3d7b2] bg-[#e2f1e1]" },
+  { keys: ["bk", "bimbingankonseling"], tone: "border-[#afe0ba] bg-[#dff5e4]" },
+  { keys: ["pjok"], tone: "border-[#b4dfdf] bg-[#e0f4f3]" },
+  { keys: ["pancasila", "ppkn"], tone: "border-[#ecc39d] bg-[#fbeddf]" },
+] as const;
+
+const FALLBACK_TONES = [
   "border-[#efc9c5] bg-[#fff3f1]",
   "border-[#cbddec] bg-[#f1f7fb]",
   "border-[#cfe3d0] bg-[#f2f8f1]",
-  "border-[#e8dbb9] bg-[#fbf7eb]",
-  "border-[#ddd2e9] bg-[#f7f3fa]",
-  "border-[#cbe3df] bg-[#f0f8f6]",
 ] as const;
 
 function subjectTone(subject: string) {
-  const toneIndex = Array.from(subject.trim().toLocaleLowerCase("id-ID"))
-    .reduce((total, character) => total + (character.codePointAt(0) ?? 0), 0) % SUBJECT_TONES.length;
-  return SUBJECT_TONES[toneIndex];
+  const subjectKey = subject.toLocaleLowerCase("id-ID").replace(/[^a-z0-9]/g, "");
+  const matchingRule = SUBJECT_TONE_RULES.find(({ keys }) => keys.some((key) => subjectKey === key || (key.length > 4 && subjectKey.includes(key))));
+  if (matchingRule) return matchingRule.tone;
+
+  const toneIndex = Array.from(subjectKey)
+    .reduce((total, character) => total + (character.codePointAt(0) ?? 0), 0) % FALLBACK_TONES.length;
+  return FALLBACK_TONES[toneIndex];
 }
 
 export default function PublicSchedule({
