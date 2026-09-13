@@ -1,22 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Pause, Play, SkipBack, SkipForward, Volume2 } from "lucide-react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
+import { ChevronDown, Pause, Play, Repeat, Repeat1, SkipBack, SkipForward } from "lucide-react";
 import type { MusicTrack } from "@/types";
+import styles from "./SoundCloudDockPlayer.module.css";
 
 type Widget = { bind: (event: string, callback: (value?: { currentPosition?: number }) => void) => void; load: (url: string, options: Record<string, unknown>) => void; play: () => void; pause: () => void; seekTo: (ms: number) => void; getDuration: (callback: (ms: number) => void) => void };
 declare global { interface Window { SC?: { Widget: ((iframe: HTMLIFrameElement) => Widget) & { Events: Record<string, string> } } } }
 
 function clock(ms: number) { const seconds = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`; }
+type RepeatMode = "none" | "all" | "one";
 
 export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const widgetRef = useRef<Widget | null>(null);
+  const repeatModeRef = useRef<RepeatMode>("none");
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(tracks[0]?.duration_ms ?? 0);
   const [brokenArtworkId, setBrokenArtworkId] = useState<string | null>(null);
+  const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
   const current = tracks[index];
 
   useEffect(() => {
@@ -29,7 +33,19 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
       widget.bind(events.READY, () => widget.getDuration(setDuration));
       widget.bind(events.PLAY, () => setPlaying(true));
       widget.bind(events.PAUSE, () => setPlaying(false));
-      widget.bind(events.FINISH, () => setIndex((value) => (value + 1) % tracks.length));
+      widget.bind(events.FINISH, () => {
+        if (repeatModeRef.current === "one") {
+          widget.seekTo(0);
+          widget.play();
+          return;
+        }
+        setIndex((value) => {
+          if (value < tracks.length - 1) return value + 1;
+          if (repeatModeRef.current === "all") return 0;
+          setPlaying(false);
+          return value;
+        });
+      });
       widget.bind(events.PLAY_PROGRESS, (event) => setPosition(event?.currentPosition ?? 0));
     };
     if (window.SC) initialize();
@@ -47,6 +63,12 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     widgetRef.current.load(current.soundcloud_url, { auto_play: false, hide_related: true, show_comments: false, show_user: false, show_reposts: false, visual: false });
   }, [current?.id]);
 
+  function cycleRepeatMode() {
+    const next: RepeatMode = repeatMode === "none" ? "all" : repeatMode === "all" ? "one" : "none";
+    repeatModeRef.current = next;
+    setRepeatMode(next);
+  }
+
   if (!current) return <div className="flex h-11 min-w-0 flex-1 items-center px-2 text-xs text-gray-500">Playlist belum tersedia.</div>;
   const artwork = current.artwork_url?.replace("-large.", "-t500x500.");
   return <div className="relative flex h-[112px] min-w-0 flex-1 items-center overflow-hidden px-3">
@@ -56,19 +78,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
     <div aria-hidden="true" className="absolute inset-0 opacity-30 [background-image:linear-gradient(115deg,transparent_12%,rgba(17,24,39,0.08)_12.5%,transparent_13%),linear-gradient(20deg,transparent_72%,rgba(17,24,39,0.06)_72.5%,transparent_73%)]" />
 
     <div className="relative z-10 grid size-[94px] shrink-0 place-items-center" aria-hidden="true">
-      {Array.from({ length: 36 }, (_, bar) => (
-        <span
-          key={bar}
-          className="absolute left-1/2 top-1/2 h-[47px] w-[2px] origin-bottom"
-          style={{ transform: `translate(-50%, -100%) rotate(${bar * 10}deg)` }}
-        >
-          <span
-            className="absolute left-0 top-0 w-[2px] rounded-full bg-gray-950/90 transition-[height] duration-300"
-            style={{ height: `${playing ? 7 + ((bar * 7) % 13) : 5 + ((bar * 3) % 7)}px` }}
-          />
-        </span>
-      ))}
-      <div className="relative size-[62px] overflow-hidden rounded-full bg-gray-900 shadow-[0_4px_16px_rgba(17,24,39,0.22)]">
+      <div className="relative size-[68px] overflow-hidden rounded-full bg-gray-900 shadow-[0_4px_16px_rgba(17,24,39,0.22)]">
         {artwork && brokenArtworkId !== current.id ? <img src={artwork} alt="" referrerPolicy="no-referrer" onError={() => setBrokenArtworkId(current.id)} className={`size-full object-cover ${playing ? "animate-[spin_9s_linear_infinite]" : ""}`} /> : <span className="grid size-full place-items-center bg-[radial-gradient(circle_at_35%_30%,#596579,#111827_68%)] text-[9px] font-semibold text-white/80">SC</span>}
         <span className="absolute left-1/2 top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/80 bg-gray-900" />
       </div>
@@ -88,10 +98,25 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
         <span className="text-[7px] tabular-nums text-gray-500">{clock(duration)}</span>
       </div>
       <div className="mt-1.5 flex items-center justify-center gap-1">
-        <Volume2 size={9} className="text-gray-500" aria-hidden="true" />
+        <button type="button" onClick={cycleRepeatMode} className="grid size-4 place-items-center text-gray-500 transition-colors hover:text-gray-900" aria-label={repeatMode === "none" ? "Pengulangan mati" : repeatMode === "all" ? "Ulangi playlist" : "Ulangi satu lagu"} title={repeatMode === "none" ? "Repeat: none" : repeatMode === "all" ? "Repeat: playlist" : "Repeat: 1 lagu"}>
+          {repeatMode === "one" ? <Repeat1 size={10} /> : <Repeat size={10} className={repeatMode === "none" ? "opacity-35" : ""} />}
+        </button>
         <a href={current.soundcloud_url} target="_blank" rel="noopener noreferrer" className="inline-flex h-4 items-center gap-1 rounded-[2px] bg-gray-900 px-1.5 text-[7px] font-semibold text-white" aria-label="Buka lagu di SoundCloud">SoundCloud <ChevronDown size={8} /></a>
         <span title="Sumber audio: SoundCloud" aria-label="Sumber audio SoundCloud" className="grid size-3 place-items-center rounded-[2px] bg-rose-600 text-[5px] font-bold text-white">SC</span>
       </div>
+    </div>
+
+    <div className={styles.equalizer} aria-hidden="true" data-playing={playing ? "true" : "false"}>
+      {Array.from({ length: 42 }, (_, bar) => (
+        <span
+          key={bar}
+          style={{
+            "--bar-height": `${5 + ((bar * 11) % 18)}px`,
+            "--bar-duration": `${0.72 + ((bar * 7) % 9) * 0.06}s`,
+            "--bar-delay": `${-((bar * 5) % 13) * 0.08}s`,
+          } as CSSProperties}
+        />
+      ))}
     </div>
   </div>;
 }
