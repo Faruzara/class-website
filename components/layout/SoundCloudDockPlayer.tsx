@@ -215,11 +215,18 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
   if (!current) return <div className="flex h-11 min-w-0 flex-1 items-center px-2 text-xs text-gray-500">Playlist belum tersedia.</div>;
   const artwork = current.artwork_url?.replace("-large.", "-t500x500.");
   const waveformCenter = waveformSamples.length && duration > 0 ? Math.round((position / duration) * (waveformSamples.length - 1)) : 0;
-  const equalizerBars = Array.from({ length: 42 }, (_, bar) => {
-    if (!waveformSamples.length) return 5 + ((bar * 11) % 18);
+  const waveformWindow = Array.from({ length: 42 }, (_, bar) => {
+    if (!waveformSamples.length) return null;
     const sampleIndex = Math.min(waveformSamples.length - 1, Math.max(0, waveformCenter + bar - 21));
-    return 4 + waveformSamples[sampleIndex] * 19;
+    return waveformSamples[sampleIndex];
   });
+  const visibleSamples = waveformWindow.filter((sample): sample is number => sample !== null);
+  const windowFloor = visibleSamples.length ? Math.min(...visibleSamples) : 0;
+  const windowPeak = visibleSamples.length ? Math.max(...visibleSamples) : 1;
+  const windowRange = Math.max(0.08, windowPeak - windowFloor);
+  const equalizerBars = waveformWindow.map((sample, bar) => sample === null
+    ? 6 + ((bar * 11) % 22)
+    : 5 + Math.pow(Math.min(1, Math.max(0, (sample - windowFloor) / windowRange)), 0.82) * 25);
   return <div className="relative flex h-[112px] min-w-0 flex-1 items-center overflow-hidden px-3">
     <iframe ref={iframeRef} title="SoundCloud player" className="absolute size-px opacity-0" tabIndex={-1} allow="autoplay" src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(current.soundcloud_url)}&auto_play=false&show_artwork=false`} />
     {artwork && brokenArtworkId !== current.id ? <img src={artwork} alt="" referrerPolicy="no-referrer" aria-hidden="true" className="absolute inset-0 size-full scale-110 object-cover opacity-[0.16] blur-[5px] grayscale" /> : null}
