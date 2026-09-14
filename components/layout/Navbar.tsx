@@ -41,6 +41,7 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
   const [dockRevealed, setDockRevealed] = useState(false);
   const [dockHiddenForFooter, setDockHiddenForFooter] = useState(false);
   const [dockAtPageEdge, setDockAtPageEdge] = useState(true);
+  const dockAtPageEdgeRef = useRef(true);
   const [dockNeededForShortPage, setDockNeededForShortPage] = useState(false);
   const [dockPage, setDockPage] = useState<1 | 2>(1);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -100,7 +101,14 @@ export default function Navbar({ announcements = [], musicTracks = [] }: { annou
       const revealAfter = Math.min(160, Math.max(120, window.innerHeight * 0.16));
       const progress = maximumScroll > 0 ? Math.min(1, Math.max(0, window.scrollY / maximumScroll)) : 0;
       setDockNeededForShortPage(maximumScroll < revealAfter);
-      setDockAtPageEdge(window.scrollY <= 8 || window.scrollY >= maximumScroll - 8);
+      const distanceFromTop = Math.max(0, window.scrollY);
+      const distanceFromBottom = Math.max(0, maximumScroll - window.scrollY);
+      const edgeThreshold = dockAtPageEdgeRef.current ? 36 : 8;
+      const nextAtPageEdge = distanceFromTop <= edgeThreshold || distanceFromBottom <= edgeThreshold;
+      if (nextAtPageEdge !== dockAtPageEdgeRef.current) {
+        dockAtPageEdgeRef.current = nextAtPageEdge;
+        setDockAtPageEdge(nextAtPageEdge);
+      }
       const edge = 4;
       const markerX = edge + Math.max(0, track.clientWidth - edge * 2) * progress;
       marker.style.transform = `translate3d(${markerX}px, 0, 0) translateX(-50%)`;

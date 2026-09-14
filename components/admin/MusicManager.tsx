@@ -78,6 +78,8 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
   const [previewUrl, setPreviewUrl] = useState("");
   const [busy, setBusy] = useState("");
   const [message, setMessage] = useState("");
+  const [clientMessage, setClientMessage] = useState("");
+  const [clientMessageTone, setClientMessageTone] = useState<"success" | "error">("success");
   const [testedClientId, setTestedClientId] = useState<string | null>(null);
   const [now, setNow] = useState(() => initial.checkedAt ? new Date(initial.checkedAt).getTime() : 0);
 
@@ -93,32 +95,35 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
 
   async function saveClientId() {
     if (!clientId.trim() || testedClientId !== clientId.trim()) return;
-    setBusy("client"); setMessage("");
+    setBusy("client"); setClientMessage("");
     try {
       await request("/api/admin/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "save-client-id", clientId }) });
-      setConfigured(true); setCheckedStatus("valid"); setClientId(""); setTestedClientId(null); setMessage("Client ID valid dan tersimpan.");
-    } catch (error) { setMessage(error instanceof Error ? error.message : "Gagal menyimpan."); }
+      setConfigured(true); setCheckedStatus("valid"); setClientId(""); setTestedClientId(null); setClientMessageTone("success"); setClientMessage("Client ID dapat digunakan dan sudah tersimpan.");
+    } catch (error) { setClientMessageTone("error"); setClientMessage(error instanceof Error ? error.message : "Gagal menyimpan."); }
     finally { setBusy(""); }
   }
 
   async function testClientId() {
-    setBusy("test"); setMessage("");
+    setBusy("test"); setClientMessage("");
     const candidate = clientId.trim();
     try {
       if (candidate) {
         await request("/api/admin/music", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "test-client-id-candidate", clientId: candidate }) });
         setTestedClientId(candidate);
-        setMessage("Client ID baru valid dan siap disimpan.");
+        setClientMessageTone("success");
+        setClientMessage("Client ID dapat digunakan. Tombol Save sekarang aktif.");
       } else {
         setTestedClientId(null);
         await request("/api/admin/music?action=test-client-id");
         setCheckedStatus("valid");
-        setMessage("Client ID aktif masih valid.");
+        setClientMessageTone("success");
+        setClientMessage("Client ID aktif dapat digunakan.");
       }
     } catch (error) {
       if (candidate) setTestedClientId(null);
       if (!candidate) setCheckedStatus(error instanceof Error && /kedaluwarsa|ditolak/.test(error.message) ? "expired" : "error");
-      setMessage(error instanceof Error ? error.message : "Pemeriksaan gagal.");
+      setClientMessageTone("error");
+      setClientMessage(error instanceof Error ? error.message : "Client ID tidak dapat digunakan.");
     }
     finally { setBusy(""); }
   }
@@ -162,13 +167,14 @@ export default function MusicManager({ initial }: { initial: InitialState }) {
       <header className="flex flex-col gap-3 border-b border-gray-100 px-5 py-4 sm:flex-row sm:items-start sm:justify-between"><div><h2 className="font-display text-base font-semibold text-gray-900">SoundCloud Client ID</h2><p className="mt-0.5 text-xs text-gray-500">Dipakai server untuk pencarian. Nilai tersimpan tidak pernah ditampilkan kembali.</p></div><StatusBadge status={status} configured={configured} /></header>
       <div className="px-5 py-4">
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input disabled={!canEditClientId} type={showClientId ? "text" : "password"} value={clientId} onChange={(event) => { setClientId(event.target.value); setTestedClientId(null); }} onKeyDown={(event) => { if (event.key === "Enter" && canEditClientId && testedClientId === clientId.trim()) void saveClientId(); }} placeholder={configured ? "••••••••••••••••••••" : "Tempel Client ID di sini"} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400" />
+        <input disabled={!canEditClientId} type={showClientId ? "text" : "password"} value={clientId} onChange={(event) => { setClientId(event.target.value); setTestedClientId(null); setClientMessage(""); }} onKeyDown={(event) => { if (event.key === "Enter" && canEditClientId && testedClientId === clientId.trim()) void saveClientId(); }} placeholder={configured ? "••••••••••••••••••••" : "Tempel Client ID di sini"} className="min-w-0 flex-1 rounded-xl border border-gray-200 px-3 py-2.5 text-sm outline-none focus:border-gray-400 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400" />
         <div className="flex gap-2">
           <button type="button" onClick={() => setShowClientId((value) => !value)} disabled={!canEditClientId || !clientId} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">{showClientId ? <EyeOff size={14} /> : <Eye size={14} />}{showClientId ? "Hide" : "Show"}</button>
           <button type="button" onClick={testClientId} disabled={(!configured && !clientId.trim()) || busy === "test"} className="inline-flex min-h-10 items-center gap-1.5 rounded-xl border border-gray-200 px-3 text-xs font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40">{busy === "test" ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}Test</button>
         </div>
       </div>
       <div className="mt-3"><StatusLine status={status} configured={configured} checkedAt={checkedAt} now={now} /></div>
+      {clientMessage ? <p role="status" className={`mt-2 rounded-lg px-3 py-2 text-xs font-medium ${clientMessageTone === "success" ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-700"}`}>{clientMessage}</p> : null}
       {!canEditClientId ? <p className="mt-2 text-xs leading-5 text-gray-400">Client ID masih aktif. Admin hanya dapat menggantinya setelah status terdeteksi kedaluwarsa.</p> : null}
       <button type="button" onClick={saveClientId} disabled={!canEditClientId || !clientId.trim() || testedClientId !== clientId.trim() || busy === "client"} className="mt-4 inline-flex min-h-10 items-center gap-1.5 rounded-xl bg-gray-900 px-4 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40">{busy === "client" ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}Save</button>
       <div className="mt-5 border-t border-gray-100 pt-4">

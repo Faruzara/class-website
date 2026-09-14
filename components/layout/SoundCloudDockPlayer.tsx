@@ -2,10 +2,11 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Loader2, Pause, Play, Repeat, Repeat1, Shuffle, SkipBack, SkipForward } from "lucide-react";
-import type { MusicTrack } from "@/types";
+import type { ApiResponse, MusicTrack } from "@/types";
 import styles from "./SoundCloudDockPlayer.module.css";
 
-type Widget = { bind: (event: string, callback: (value?: { currentPosition?: number }) => void) => void; load: (url: string, options: Record<string, unknown>) => void; play: () => void; pause: () => void; seekTo: (ms: number) => void; getDuration: (callback: (ms: number) => void) => void; isPaused: (callback: (paused: boolean) => void) => void };
+type SoundCloudSound = { waveform_url?: string };
+type Widget = { bind: (event: string, callback: (value?: { currentPosition?: number }) => void) => void; load: (url: string, options: Record<string, unknown>) => void; play: () => void; pause: () => void; seekTo: (ms: number) => void; getDuration: (callback: (ms: number) => void) => void; getCurrentSound: (callback: (sound: SoundCloudSound) => void) => void; isPaused: (callback: (paused: boolean) => void) => void };
 declare global { interface Window { SC?: { Widget: ((iframe: HTMLIFrameElement) => Widget) & { Events: Record<string, string> } } } }
 
 function clock(ms: number) { const seconds = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`; }
@@ -20,6 +21,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
   const pendingPlayRef = useRef(false);
   const desiredPlayingRef = useRef(false);
   const loadingTrackRef = useRef(false);
+  const waveformTrackIdRef = useRef<string | null>(null);
   const repeatModeRef = useRef<RepeatMode>("none");
   const shuffleRef = useRef(false);
   const [index, setIndex] = useState(0);
@@ -31,6 +33,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
   const [brokenArtworkId, setBrokenArtworkId] = useState<string | null>(null);
   const [repeatMode, setRepeatMode] = useState<RepeatMode>("none");
   const [shuffle, setShuffle] = useState(false);
+  const [waveformSamples, setWaveformSamples] = useState<number[]>([]);
   const current = tracks[index];
 
   useEffect(() => { tracksRef.current = tracks; }, [tracks]);
@@ -43,11 +46,27 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
       if (cancelled || !window.SC || !iframeRef.current) return;
       const widget = window.SC.Widget(iframeRef.current); widgetRef.current = widget;
       const events = window.SC.Widget.Events;
+      const refreshWaveform = () => {
+        const trackId = tracksRef.current[currentIndexRef.current]?.id;
+        if (!trackId || waveformTrackIdRef.current === trackId) return;
+        waveformTrackIdRef.current = trackId;
+        widget.getCurrentSound((sound) => {
+          if (!sound?.waveform_url) { waveformTrackIdRef.current = null; return; }
+          fetch(`/api/public/soundcloud-waveform?url=${encodeURIComponent(sound.waveform_url)}`)
+            .then(async (response) => {
+              const result = await response.json() as ApiResponse<{ samples: number[] }>;
+              if (!response.ok || !result.success || !result.data) throw new Error(result.error);
+              if (tracksRef.current[currentIndexRef.current]?.id === trackId) setWaveformSamples(result.data.samples);
+            })
+            .catch(() => { if (tracksRef.current[currentIndexRef.current]?.id === trackId) { waveformTrackIdRef.current = null; setWaveformSamples([]); } });
+        });
+      };
       widget.bind(events.READY, () => {
         loadedTrackIdRef.current = tracksRef.current[currentIndexRef.current]?.id ?? null;
         loadingTrackRef.current = false;
         setWidgetReady(true);
         widget.getDuration((value) => setDuration(Math.max(0, value)));
+        refreshWaveform();
         if (desiredPlayingRef.current) widget.play();
       });
       widget.bind(events.PLAY, () => {
@@ -59,6 +78,7 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
         setPlayPending(false);
         setPlaying(true);
         widget.getDuration((value) => setDuration(Math.max(0, value)));
+        refreshWaveform();
       });
       widget.bind(events.PAUSE, () => {
         if (loadingTrackRef.current || desiredPlayingRef.current) return;
@@ -122,7 +142,8 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
 
   useEffect(() => {
     if (!current || !widgetRef.current || !widgetReady || loadedTrackIdRef.current === current.id) return;
-    setPosition(0); setDuration(current.duration_ms ?? 0); setPlaying(false);
+    waveformTrackIdRef.current = null;
+    setPosition(0); setDuration(current.duration_ms ?? 0); setPlaying(false); setWaveformSamples([]);
     loadingTrackRef.current = true;
     setWidgetReady(false);
     widgetRef.current.load(current.soundcloud_url, { auto_play: desiredPlayingRef.current, hide_related: true, show_comments: false, show_user: false, show_reposts: false, visual: false, callback: () => { loadingTrackRef.current = false; loadedTrackIdRef.current = current.id; setWidgetReady(true); widgetRef.current?.getDuration((value) => setDuration(Math.max(0, value))); if (desiredPlayingRef.current) widgetRef.current?.play(); } });
@@ -193,6 +214,12 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
 
   if (!current) return <div className="flex h-11 min-w-0 flex-1 items-center px-2 text-xs text-gray-500">Playlist belum tersedia.</div>;
   const artwork = current.artwork_url?.replace("-large.", "-t500x500.");
+  const waveformCenter = waveformSamples.length && duration > 0 ? Math.round((position / duration) * (waveformSamples.length - 1)) : 0;
+  const equalizerBars = Array.from({ length: 42 }, (_, bar) => {
+    if (!waveformSamples.length) return 5 + ((bar * 11) % 18);
+    const sampleIndex = Math.min(waveformSamples.length - 1, Math.max(0, waveformCenter + bar - 21));
+    return 4 + waveformSamples[sampleIndex] * 19;
+  });
   return <div className="relative flex h-[112px] min-w-0 flex-1 items-center overflow-hidden px-3">
     <iframe ref={iframeRef} title="SoundCloud player" className="absolute size-px opacity-0" tabIndex={-1} allow="autoplay" src={`https://w.soundcloud.com/player/?url=${encodeURIComponent(current.soundcloud_url)}&auto_play=false&show_artwork=false`} />
     {artwork && brokenArtworkId !== current.id ? <img src={artwork} alt="" referrerPolicy="no-referrer" aria-hidden="true" className="absolute inset-0 size-full scale-110 object-cover opacity-[0.16] blur-[5px] grayscale" /> : null}
@@ -224,12 +251,12 @@ export default function SoundCloudDockPlayer({ tracks }: { tracks: MusicTrack[] 
       </div>
     </div>
 
-    <div className={styles.equalizer} aria-hidden="true" data-playing={playing ? "true" : "false"}>
-      {Array.from({ length: 42 }, (_, bar) => (
+    <div className={styles.equalizer} aria-hidden="true" data-playing={playing ? "true" : "false"} data-waveform={waveformSamples.length ? "true" : "false"}>
+      {equalizerBars.map((height, bar) => (
         <span
           key={bar}
           style={{
-            "--bar-height": `${5 + ((bar * 11) % 18)}px`,
+            "--bar-height": `${height}px`,
             "--bar-duration": `${0.72 + ((bar * 7) % 9) * 0.06}s`,
             "--bar-delay": `${-((bar * 5) % 13) * 0.08}s`,
           } as CSSProperties}

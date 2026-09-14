@@ -110,7 +110,7 @@ export function DraggableContainer({
 
   return (
     <GridVariantContext.Provider value={variant}>
-      <div ref={viewportRef} className="relative h-dvh min-h-[520px] w-full overflow-hidden bg-transparent">
+      <div ref={viewportRef} className="relative h-svh min-h-[520px] w-full overflow-hidden bg-transparent md:h-screen">
         <motion.div
           ref={canvasRef}
           className={clsx(

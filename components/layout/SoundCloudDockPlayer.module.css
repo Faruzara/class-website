@@ -41,6 +41,12 @@
   animation: soundcloud-soft-rhythm var(--bar-duration) ease-in-out var(--bar-delay) infinite alternate;
 }
 
+.equalizer[data-waveform="true"] span {
+  height: var(--bar-height);
+  animation: none;
+  opacity: 0.72;
+}
+
 @keyframes soundcloud-soft-rhythm {
   0% { height: 3px; opacity: 0.35; }
   55% { height: var(--bar-height); opacity: 0.8; }
